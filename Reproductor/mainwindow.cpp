@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));
 
     ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png")); // Icono para el botón Siguiente
-    ui->pushButton_Random->setIcon(QIcon(":/imagenes/random.png")); // Icono para el botón Aleatorio
+
 
     // Configuración inicial de volumen
     ui->horizontalSlider_Volume->setMinimum(0);
@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(Player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onMediaStatusChanged);
 
     connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
-    connect(ui->pushButton_Random, &QPushButton::clicked, this, &MainWindow::on_pushButton_Random_clicked);
+
 
     // Atajo para el botón de Play/Pause
     QShortcut *playPauseShortcut = new QShortcut(QKeySequence("Space"), this);
@@ -459,51 +459,7 @@ void MainWindow::on_pushButton_Next_clicked()
     }
 }
 
-void MainWindow::on_pushButton_Random_clicked()
-{
-    // Verificar si la lista de reproducción está vacía
-    if (playlist.isEmpty()) {
-        QMessageBox::warning(this, tr("Error"), tr("PRIMERO INSERTE ARCHIVOS"));
-        return; // Salir de la función si no hay archivos
-    }
 
-    isRandom = !isRandom;
-    if (isRandom) {
-        ui->pushButton_Random->setText("Desactivar Aleatorio");
-
-        // Reproducir un archivo aleatorio de la lista
-        int randomIndex = QRandomGenerator::global()->generate() % playlist.size();
-        currentIndex = randomIndex;
-        QString randomFile = playlist[currentIndex];
-        Player->setSource(QUrl::fromLocalFile(randomFile));
-
-        // Verificar si el archivo aleatorio es un audio o un video
-        if (randomFile.endsWith(".mp3")) {
-            // Reproducir video de fondo
-            BackgroundPlayer->setSource(QUrl::fromLocalFile("C:/Users/maria/Desktop/Proyecto final/Video/imagenes/Disco.mp4"));
-            BackgroundVideo->setVisible(true);
-            BackgroundPlayer->play();
-        } else {
-            // Detener el video de fondo
-            BackgroundPlayer->stop();
-            BackgroundVideo->setVisible(false);
-
-            // Configurar y mostrar el video
-            Video = new QVideoWidget();
-            Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-            Video->setParent(ui->groupBox_Video);
-            Player->setVideoOutput(Video);
-            Player->setSource(QUrl::fromLocalFile(randomFile));
-            Video->setVisible(true);
-            Video->show();
-        }
-
-        Player->play();
-        fileList->setCurrentRow(currentIndex);
-    } else {
-        ui->pushButton_Random->setText("Aleatorio");
-    }
-}
 void MainWindow::moveItemUp()
 {
     int currentIndex = fileList->currentRow();
