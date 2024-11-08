@@ -38,7 +38,7 @@ public:
     QMenuBar *menubar;
     QMenu *menuSelect_Video_File;
     QPushButton *pushButton_Next;
-    QPushButton *pushButton_Random;
+
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -135,9 +135,7 @@ public:
         pushButton_Next->setObjectName(QString::fromUtf8("pushButton_Next"));
         pushButton_Next->setGeometry(QRect(140, 500, 51, 41));
 
-        pushButton_Random = new QPushButton(centralwidget);
-        pushButton_Random->setObjectName(QString::fromUtf8("pushButton_Random"));
-        pushButton_Random->setGeometry(QRect(200, 500, 51, 41));
+
 
 
         menubar->addAction(menuSelect_Video_File->menuAction());
@@ -163,7 +161,6 @@ public:
         menuSelect_Video_File->setTitle(QCoreApplication::translate("MainWindow", "Archivo", nullptr));
 
         pushButton_Next->setText(QCoreApplication::translate("MainWindow", "Siguiente", nullptr));
-        pushButton_Random->setText(QCoreApplication::translate("MainWindow", "Aleatorio", nullptr));
 
     } // retranslateUi
 
