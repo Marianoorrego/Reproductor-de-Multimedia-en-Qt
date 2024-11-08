@@ -74,7 +74,7 @@ private slots:
  void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
  void increaseVolume();
  void decreaseVolume();
- void on_pushButton_Next_clicked(); // Nueva función para reproducir el siguiente archivo
+
 
  void moveItemUp();
  void moveItemDown();
