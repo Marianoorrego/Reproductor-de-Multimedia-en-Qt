@@ -37,7 +37,7 @@ public:
     QLabel *label_Total_Time;
     QMenuBar *menubar;
     QMenu *menuSelect_Video_File;
-    QPushButton *pushButton_Next;
+
 
 
     void setupUi(QMainWindow *MainWindow)
@@ -131,9 +131,6 @@ public:
         menuSelect_Video_File->setObjectName(QString::fromUtf8("menuSelect_Video_File"));
         MainWindow->setMenuBar(menubar);
 
-        pushButton_Next = new QPushButton(centralwidget);
-        pushButton_Next->setObjectName(QString::fromUtf8("pushButton_Next"));
-        pushButton_Next->setGeometry(QRect(140, 500, 51, 41));
 
 
 
@@ -160,7 +157,7 @@ public:
         label_Total_Time->setText(QCoreApplication::translate("MainWindow", "00:00:00", nullptr));
         menuSelect_Video_File->setTitle(QCoreApplication::translate("MainWindow", "Archivo", nullptr));
 
-        pushButton_Next->setText(QCoreApplication::translate("MainWindow", "Siguiente", nullptr));
+
 
     } // retranslateUi
 
