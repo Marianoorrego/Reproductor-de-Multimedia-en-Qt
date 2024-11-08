@@ -14,7 +14,7 @@
 #include <QDirIterator>
 #include <QDir>
 #include <QShortcut>
-#include <QRandomGenerator>
+
 
 
 QT_BEGIN_NAMESPACE
@@ -75,7 +75,7 @@ private slots:
  void increaseVolume();
  void decreaseVolume();
  void on_pushButton_Next_clicked(); // Nueva función para reproducir el siguiente archivo
- void on_pushButton_Random_clicked();
+
  void moveItemUp();
  void moveItemDown();
 private:
@@ -121,7 +121,6 @@ private:
 
     int currentIndex = -1; // Índice del archivo actual
     QStringList playlist;   // Lista de archivos para la reproducción
-    bool isRandom = false;
 
 
 };
