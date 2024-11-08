@@ -202,6 +202,12 @@ void MainWindow::addFile()
         playlist.append(fileName); // Agregar a la lista de reproducción
     }
 }
+void MainWindow::on_pushButton_Volume_clicked()
+{
+    IS_Muted = !IS_Muted; // Cambia el estado de silencio
+    audioOutput->setVolume(IS_Muted ? 0 : ui->horizontalSlider_Volume->value() / 100.0);
+    ui->pushButton_Volume->setIcon(IS_Muted ? QIcon(":/imagenes/mute.png") : QIcon(":/imagenes/sound.png"));
+}
 // Método que actualiza la duración máxima del video en el deslizador de progreso
 
 void MainWindow::durationChanged(qint64 duration)
