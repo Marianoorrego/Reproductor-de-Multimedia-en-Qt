@@ -143,6 +143,12 @@ MainWindow::MainWindow(QWidget *parent)
                              "La reproducción de audio no mostrará video de fondo.");
     }
 
+    QPushButton *clearPlaylistButton = new QPushButton("Limpiar Lista", dockContents);
+    dockLayout->addWidget(clearPlaylistButton);
+    connect(clearPlaylistButton, &QPushButton::clicked, this, &MainWindow::clearPlaylist);
+    // Atajo para limpiar la lista
+    QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);
+    connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);
 }
 
 
@@ -293,7 +299,7 @@ void MainWindow::on_actionOpen_triggered()
     if (FileName.endsWith(".mp3")) {
         // Reproducir archivo de audio y mostrar video de fondo
         QString applicationDir = QCoreApplication::applicationDirPath();
-    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+        QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
 
         BackgroundVideo->setVisible(true);
         BackgroundPlayer->play();
@@ -338,7 +344,7 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
         QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
         if (currentFile.endsWith(".mp3")) {
             QString applicationDir = QCoreApplication::applicationDirPath();
-    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+            QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
 
             BackgroundVideo->setVisible(true);
             BackgroundPlayer->play();
@@ -561,7 +567,7 @@ void MainWindow::playFile(const QString& filePath)
     if (filePath.endsWith(".mp3")) {
         // Configuración para audio
         QString applicationDir = QCoreApplication::applicationDirPath();
-    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+        QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
 
 
         // Asegurarse de que el video de fondo esté configurado correctamente
@@ -612,3 +618,33 @@ QString MainWindow::findBackgroundVideo() {
     return QString();
 }
 
+void MainWindow::clearPlaylist()
+{
+    // Mostrar un cuadro de diálogo de confirmación
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "Limpiar Lista",
+        "¿Está seguro que desea limpiar la lista de reproducción?",
+        QMessageBox::Yes | QMessageBox::No
+        );
+
+    if (reply == QMessageBox::Yes) {
+        // Detener la reproducción
+        Player->stop();
+        BackgroundPlayer->stop();
+
+        // Limpiar la lista
+        fileList->clear();
+        fileMap.clear();
+        playlist.clear();
+
+        // Resetear índices y estado
+        currentIndex = -1;
+        BackgroundVideo->setVisible(false);
+
+        // Resetear labels y slider
+        ui->label_current_Time->setText("00:00:00");
+        ui->label_Total_Time->setText("00:00:00");
+        ui->horizontalSlider_Duration->setValue(0);
+    }
+}
