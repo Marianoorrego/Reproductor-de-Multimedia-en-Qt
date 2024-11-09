@@ -27,7 +27,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # Archivos distribuidos con el proyecto (medios multimedia y recursos de imagen)
 DISTFILES += \
-    imagenes/Disco.mp4 \
+
     imagenes/avanzar.png \
     imagenes/fullscreen.png \
     imagenes/mute.png \
