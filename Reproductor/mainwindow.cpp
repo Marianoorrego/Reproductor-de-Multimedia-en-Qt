@@ -4,7 +4,8 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow),
- Video(nullptr)
+    Video(nullptr),
+    currentIndex(-1)
 {
     ui->setupUi(this);
     resize(1100, 630);
@@ -72,7 +73,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png"));
     ui->pushButton_Previous->setIcon(QIcon(":/imagenes/prev.png"));
 
-BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
 
     // Configuración inicial de volumen
     ui->horizontalSlider_Volume->setMinimum(0);
@@ -133,6 +133,15 @@ BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
     connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
     connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);
 
+
+    QString backgroundVideoPath = findBackgroundVideo();
+    if (!backgroundVideoPath.isEmpty()) {
+        BackgroundPlayer->setSource(QUrl::fromLocalFile(backgroundVideoPath));
+    } else {
+        QMessageBox::warning(this, "Advertencia",
+                             "No se pudo encontrar el video de fondo predeterminado. "
+                             "La reproducción de audio no mostrará video de fondo.");
+    }
 
 }
 
@@ -216,9 +225,11 @@ void MainWindow::addFile()
         }
     }
 
-    // Establecer el índice actual en el primer elemento si es necesario
-    if (currentIndex == -1 && !playlist.isEmpty()) {
-        currentIndex = 0;
+    initializePlaylistIndex();
+
+    // Si hay archivos válidos, reproducir el primero
+    if (currentIndex != -1) {
+        playFile(playlist[currentIndex]);
     }
 
 }
@@ -281,7 +292,9 @@ void MainWindow::on_actionOpen_triggered()
 
     if (FileName.endsWith(".mp3")) {
         // Reproducir archivo de audio y mostrar video de fondo
-BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
+        QString applicationDir = QCoreApplication::applicationDirPath();
+    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+
         BackgroundVideo->setVisible(true);
         BackgroundPlayer->play();
 
@@ -324,7 +337,9 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
         // Aquí puedes usar una variable para rastrear el archivo actual
         QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
         if (currentFile.endsWith(".mp3")) {
-         BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
+            QString applicationDir = QCoreApplication::applicationDirPath();
+    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+
             BackgroundVideo->setVisible(true);
             BackgroundPlayer->play();
         } else {
@@ -402,16 +417,24 @@ void MainWindow::onFileSelected(QListWidgetItem *item)
 void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::EndOfMedia) {
-        // Si el archivo actual ha terminado, verifica si hay un archivo en la lista para reproducir
-        if (currentIndex < playlist.size() - 1) {
-            currentIndex++; // Avanzar al siguiente archivo
-            playFile(playlist[currentIndex]); // Usar el método playFile para reproducir
-        } else {
-            // Si no hay más archivos en la lista, detener todo
-            Player->stop();
-            BackgroundPlayer->stop();
-            BackgroundVideo->setVisible(false); // Ocultar el video de fondo
-        }
+        int originalIndex = currentIndex;
+        int attempts = 0;
+
+        do {
+            currentIndex = (currentIndex + 1) % playlist.size();
+            attempts++;
+
+            // Prevenir bucle infinito
+            if (attempts > playlist.size()) {
+                Player->stop();
+                BackgroundPlayer->stop();
+                BackgroundVideo->setVisible(false);
+                return;
+            }
+
+        } while (!QFileInfo(playlist[currentIndex]).exists());
+
+        playFile(playlist[currentIndex]);
     }
 }
 
@@ -458,27 +481,68 @@ void MainWindow::moveItemDown()
     }
 }
 
+void MainWindow::initializePlaylistIndex()
+{
+    if (playlist.isEmpty()) {
+        currentIndex = -1;
+        return;
+    }
+
+    // Buscar el primer archivo válido
+    for (int i = 0; i < playlist.size(); ++i) {
+        QFileInfo fileInfo(playlist[i]);
+        if (fileInfo.exists()) {
+            currentIndex = i;
+            return;
+        }
+    }
+
+    // Si no se encontró ningún archivo válido
+    currentIndex = -1;
+}
+
 void MainWindow::on_pushButton_Next_clicked()
 {
     if (playlist.isEmpty()) return;
 
-    // Decrementar con control de límites
-    currentIndex = (currentIndex - 1 + playlist.size()) % playlist.size();
+    int originalIndex = currentIndex;
+    int attempts = 0;
 
-    QString prevFile = playlist[currentIndex];
-    playFile(prevFile);
+    do {
+        currentIndex = (currentIndex + 1) % playlist.size();
+        attempts++;
+
+        // Prevenir bucle infinito
+        if (attempts > playlist.size()) {
+            qDebug() << "No se encontró ningún archivo reproducible";
+            return;
+        }
+
+    } while (!QFileInfo(playlist[currentIndex]).exists());
+
+    playFile(playlist[currentIndex]);
 }
 
 void MainWindow::on_pushButton_Previous_clicked()
-
 {
     if (playlist.isEmpty()) return;
 
-    // Incrementar con control de límites
-    currentIndex = (currentIndex + 1) % playlist.size();
+    int originalIndex = currentIndex;
+    int attempts = 0;
 
-    QString nextFile = playlist[currentIndex];
-    playFile(nextFile);
+    do {
+        currentIndex = (currentIndex - 1 + playlist.size()) % playlist.size();
+        attempts++;
+
+        // Prevenir bucle infinito
+        if (attempts > playlist.size()) {
+            qDebug() << "No se encontró ningún archivo reproducible";
+            return;
+        }
+
+    } while (!QFileInfo(playlist[currentIndex]).exists());
+
+    playFile(playlist[currentIndex]);
 }
 
 void MainWindow::playFile(const QString& filePath)
@@ -496,7 +560,9 @@ void MainWindow::playFile(const QString& filePath)
 
     if (filePath.endsWith(".mp3")) {
         // Configuración para audio
-  BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
+        QString applicationDir = QCoreApplication::applicationDirPath();
+    QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+
 
         // Asegurarse de que el video de fondo esté configurado correctamente
         BackgroundPlayer->setVideoOutput(BackgroundVideo);
@@ -521,5 +587,28 @@ void MainWindow::playFile(const QString& filePath)
         Player->setSource(QUrl::fromLocalFile(filePath));
         Player->play();
     }
+}
+
+QString MainWindow::findBackgroundVideo() {
+    QString applicationDir = QCoreApplication::applicationDirPath();
+    QString defaultPath = applicationDir + "/Video/imagenes/musica.mp4";
+
+    QStringList possiblePaths = {
+        defaultPath,
+        applicationDir + "/../Video/imagenes/musica.mp4",
+        applicationDir + "/../../Video/imagenes/musica.mp4",
+        QDir::homePath() + "/Desktop/Proyecto final/Video/imagenes/musica.mp4"
+    };
+
+    for (const QString& path : possiblePaths) {
+        QFileInfo fileInfo(path);
+        if (fileInfo.exists()) {
+            qDebug() << "Video de fondo encontrado: " << path;
+            return path;
+        }
+    }
+
+    qWarning() << "No se encontró ningún video de fondo";
+    return QString();
 }
 
