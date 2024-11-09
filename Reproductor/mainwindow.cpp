@@ -113,7 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
     QShortcut *decreaseVolumeShortcut = new QShortcut(QKeySequence("Down"), this);
     connect(decreaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::decreaseVolume);
 
-
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures); // Desactiva todas las características de desacople
 
     // Agregar botón para mover arriba y abajo en la lista
   QPushButton *moveUpButton = new QPushButton("Mover Arriba", dockContents);
@@ -123,9 +123,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(moveUpButton, &QPushButton::clicked, this, &MainWindow::moveItemUp);
     connect(moveDownButton, &QPushButton::clicked, this, &MainWindow::moveItemDown);
 
-    qDebug() << "Current Index before increment:" << currentIndex;
-    currentIndex++;
-    qDebug() << "Current Index after increment:" << currentIndex;
+   
 }
 
 
