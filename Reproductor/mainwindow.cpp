@@ -3,7 +3,8 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow),
+ Video(nullptr)
 {
     ui->setupUi(this);
     resize(1100, 630);
@@ -11,6 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
     Player = new QMediaPlayer(this);
     audioOutput = new QAudioOutput(this);
     Player->setAudioOutput(audioOutput);
+
+    // Inicializar el QVideoWidget una vez
+    BackgroundVideo = new QVideoWidget(this);
+    initializeVideoWidget();
 
     // Creación del panel lateral (Dock) para la lista de archivos multimedia
     QDockWidget *dock = new QDockWidget(tr("Lista de archivos"), this);
@@ -64,8 +69,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_Seek_Forward->setIcon(QIcon(":/imagenes/avanzar.png"));
     ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));
 
+    ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png"));
+    ui->pushButton_Previous->setIcon(QIcon(":/imagenes/prev.png"));
 
-
+BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
 
     // Configuración inicial de volumen
     ui->horizontalSlider_Volume->setMinimum(0);
@@ -77,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(Player, &QMediaPlayer::durationChanged, this, &MainWindow::durationChanged);
     connect(Player, &QMediaPlayer::positionChanged, this, &MainWindow::positionChanged);
 
- connect(fileList, &QListWidget::itemClicked, this, &MainWindow::onFileSelected);
+    connect(fileList, &QListWidget::itemClicked, this, &MainWindow::onFileSelected);
 
     ui->horizontalSlider_Duration->setRange(0, Player->duration() / 1000);
 
@@ -116,14 +123,17 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures); // Desactiva todas las características de desacople
 
     // Agregar botón para mover arriba y abajo en la lista
-  QPushButton *moveUpButton = new QPushButton("Mover Arriba", dockContents);
+    QPushButton *moveUpButton = new QPushButton("Mover Arriba", dockContents);
     QPushButton *moveDownButton = new QPushButton("Mover Abajo", dockContents);
     dockLayout->addWidget(moveUpButton);
     dockLayout->addWidget(moveDownButton);
     connect(moveUpButton, &QPushButton::clicked, this, &MainWindow::moveItemUp);
     connect(moveDownButton, &QPushButton::clicked, this, &MainWindow::moveItemDown);
 
-   
+    connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
+    connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);
+
+
 }
 
 
@@ -199,8 +209,18 @@ void MainWindow::addFile()
         QFileInfo fileInfo(fileName);
         fileList->addItem(fileInfo.fileName());
         fileMap[fileInfo.fileName()] = fileName;
-        playlist.append(fileName); // Agregar a la lista de reproducción
+
+        // Agregar a la playlist si no está ya presente
+        if (!playlist.contains(fileName)) {
+            playlist.append(fileName);
+        }
     }
+
+    // Establecer el índice actual en el primer elemento si es necesario
+    if (currentIndex == -1 && !playlist.isEmpty()) {
+        currentIndex = 0;
+    }
+
 }
 void MainWindow::on_pushButton_Volume_clicked()
 {
@@ -261,7 +281,7 @@ void MainWindow::on_actionOpen_triggered()
 
     if (FileName.endsWith(".mp3")) {
         // Reproducir archivo de audio y mostrar video de fondo
-        BackgroundPlayer->setSource(QUrl::fromLocalFile("C:/Users/maria/Desktop/Proyecto final/Video/imagenes/Disco.mp4"));
+BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
         BackgroundVideo->setVisible(true);
         BackgroundPlayer->play();
 
@@ -304,7 +324,7 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
         // Aquí puedes usar una variable para rastrear el archivo actual
         QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
         if (currentFile.endsWith(".mp3")) {
-            BackgroundPlayer->setSource(QUrl::fromLocalFile("C:/Users/maria/Desktop/Proyecto final/Video/imagenes/Disco.mp4"));
+         BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
             BackgroundVideo->setVisible(true);
             BackgroundPlayer->play();
         } else {
@@ -326,6 +346,13 @@ void MainWindow::on_pushButton_Stop_clicked()
 void MainWindow::on_horizontalSlider_Volume_valueChanged(int value)
 {
     audioOutput->setVolume(value / 100.0);
+    if (value == 0) {
+        IS_Muted = true;
+        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/mute.png")); // Cambia a mute
+    } else {
+        IS_Muted = false;
+        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png")); // Cambia a sonido
+    }
 }
 
 // Avance en el video (seek forward)
@@ -342,67 +369,53 @@ void MainWindow::on_pushButton_Seek_Forward_clicked()
     Player->setPosition(ui->horizontalSlider_Duration->value() * 1000);
 }
 
+void MainWindow::initializeVideoWidget() {
+    BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
+    BackgroundVideo->setVisible(false); // Inicialmente no visible
+    Player->setVideoOutput(BackgroundVideo); // Asignar el video widget al reproductor
+}
+
 // Manejo de la selección de un archivo desde la lista para su reproducción
+
 void MainWindow::onFileSelected(QListWidgetItem *item)
 {
     QString fileName = item->text();
     QString fullFileName = fileMap.value(fileName);
 
     if (!fullFileName.isEmpty()) {
-        currentIndex = fileList->row(item); // Actualizar el índice actual
-        playlist.clear(); // Limpiar la lista de reproducción
-        for (int i = 0; i < fileList->count(); ++i) {
-            playlist.append(fileMap.value(fileList->item(i)->text())); // Llenar la lista de reproducción
+        // Actualizar el índice actual
+        currentIndex = fileList->row(item);
+
+        // Si la playlist está vacía o no coincide con el número de archivos en la lista
+        if (playlist.isEmpty() || playlist.size() != fileList->count()) {
+            // Reconstruir la playlist
+            playlist.clear();
+            for (int i = 0; i < fileList->count(); ++i) {
+                playlist.append(fileMap.value(fileList->item(i)->text()));
+            }
         }
 
-        // Reproducir el archivo seleccionado
-        Player->setSource(QUrl::fromLocalFile(fullFileName));
-        Player->play();
-        fileList->setCurrentRow(currentIndex); // Resaltar el archivo actual en la lista
-
-        // Manejar la visualización del video de fondo
-        if (fullFileName.endsWith(".mp3")) {
-            BackgroundPlayer->setSource(QUrl::fromLocalFile("C:/Users/maria/Desktop/Proyecto final/Video/imagenes/Disco.mp4"));
-            BackgroundVideo->setVisible(true);
-            BackgroundPlayer->play();
-        } else {
-            BackgroundPlayer->stop();
-            BackgroundVideo->setVisible(false);
-        }
+        // Usar el método playFile para manejar la reproducción
+        playFile(fullFileName);
     }
 }
 void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::EndOfMedia) {
-        // Reproducir el siguiente archivo
-        QString nextFile = playlist[currentIndex]; // Usar el índice actual
-        Player->setSource(QUrl::fromLocalFile(nextFile));
-
-        // Verificar si el siguiente archivo es un audio o un video
-        if (nextFile.endsWith(".mp3")) {
-            // Reproducir video de fondo
-            BackgroundPlayer->setSource(QUrl::fromLocalFile("C:/Users/maria/Desktop/Proyecto final/Video/imagenes/Disco.mp4"));
-            BackgroundVideo->setVisible(true);
-            BackgroundPlayer->play();
+        // Si el archivo actual ha terminado, verifica si hay un archivo en la lista para reproducir
+        if (currentIndex < playlist.size() - 1) {
+            currentIndex++; // Avanzar al siguiente archivo
+            playFile(playlist[currentIndex]); // Usar el método playFile para reproducir
         } else {
-            // Detener el video de fondo
+            // Si no hay más archivos en la lista, detener todo
+            Player->stop();
             BackgroundPlayer->stop();
-            BackgroundVideo->setVisible(false);
-
-            // Configurar y mostrar el video
-            Video = new QVideoWidget();
-            Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-            Video->setParent(ui->groupBox_Video);
-            Player->setVideoOutput(Video);
-            Player->setSource(QUrl::fromLocalFile(nextFile));
-            Video->setVisible(true);
-            Video->show();
+            BackgroundVideo->setVisible(false); // Ocultar el video de fondo
         }
-
-        Player->play();
-        fileList->setCurrentRow(currentIndex); // Resaltar el archivo actual en la lista
     }
 }
+
+
 void MainWindow::increaseVolume() {
     int currentVolume = ui->horizontalSlider_Volume->value();
     if (currentVolume < 100) {
@@ -445,8 +458,68 @@ void MainWindow::moveItemDown()
     }
 }
 
+void MainWindow::on_pushButton_Next_clicked()
+{
+    if (playlist.isEmpty()) return;
 
+    // Decrementar con control de límites
+    currentIndex = (currentIndex - 1 + playlist.size()) % playlist.size();
 
+    QString prevFile = playlist[currentIndex];
+    playFile(prevFile);
+}
 
+void MainWindow::on_pushButton_Previous_clicked()
 
+{
+    if (playlist.isEmpty()) return;
+
+    // Incrementar con control de límites
+    currentIndex = (currentIndex + 1) % playlist.size();
+
+    QString nextFile = playlist[currentIndex];
+    playFile(nextFile);
+}
+
+void MainWindow::playFile(const QString& filePath)
+{
+    if (filePath.isEmpty()) return;
+
+    // Limpiar configuraciones anteriores
+    if (Video) {
+        delete Video;
+        Video = nullptr;
+    }
+
+    // Actualizar selección en la lista
+    fileList->setCurrentRow(currentIndex);
+
+    if (filePath.endsWith(".mp3")) {
+        // Configuración para audio
+  BackgroundPlayer->setSource(QUrl::fromLocalFile(":/imagenes/musica.mp4"));
+
+        // Asegurarse de que el video de fondo esté configurado correctamente
+        BackgroundPlayer->setVideoOutput(BackgroundVideo);
+        BackgroundVideo->setParent(ui->groupBox_Video);
+        BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
+
+        BackgroundVideo->setVisible(true);
+        BackgroundPlayer->play();
+
+        Player->setSource(QUrl::fromLocalFile(filePath));
+        Player->play();
+    } else {
+        // Configuración para video
+        BackgroundPlayer->stop();
+        BackgroundVideo->setVisible(false);
+
+        Video = new QVideoWidget(ui->groupBox_Video);
+        Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
+        Player->setVideoOutput(Video);
+        Video->show();
+
+        Player->setSource(QUrl::fromLocalFile(filePath));
+        Player->play();
+    }
+}
 
