@@ -70,18 +70,21 @@ private slots:
     // Agregar un archivo a la lista de reproducción
     void addFile();
 
- void onMediaError(QMediaPlayer::Error error);
- void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
- void increaseVolume();
- void decreaseVolume();
+    void onMediaError(QMediaPlayer::Error error);
+    void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
+    void increaseVolume();
+    void decreaseVolume();
+void initializeVideoWidget();
 
-
- void moveItemUp();
- void moveItemDown();
+    void moveItemUp();
+    void moveItemDown();
+    void on_pushButton_Next_clicked();   // Slot para el botón siguiente
+    void on_pushButton_Previous_clicked(); // Slot para el botón anterior
+     void playFile(const QString& filePath);
 private:
     // Puntero a la interfaz de usuario
     Ui::MainWindow *ui;
-
+ QString findBackgroundVideo();
     // Puntero al reproductor de medios
     QMediaPlayer *Player;
 
@@ -92,7 +95,7 @@ private:
     QVideoWidget *Video;
 
     // Puntero al widget de video de fondo
-    QVideoWidget *BackgroundVideo;
+      QVideoWidget *BackgroundVideo;
 
     // Puntero a la salida de audio
     QAudioOutput *audioOutput;
@@ -121,7 +124,7 @@ private:
 
     int currentIndex = -1; // Índice del archivo actual
     QStringList playlist;   // Lista de archivos para la reproducción
-
+void initializePlaylistIndex();
 
 };
 
