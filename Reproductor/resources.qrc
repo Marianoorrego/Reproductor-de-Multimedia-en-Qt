@@ -6,8 +6,9 @@
         <file>imagenes/avanzar.png</file>
         <file>imagenes/sound.png</file>
         <file>imagenes/mute.png</file>
-        <file>imagenes/Disco.mp4</file>
         <file>imagenes/pausa.png</file>
-
+        <file>imagenes/next.png</file>
+        <file>imagenes/prev.png</file>
+        <file>imagenes/musica.mp4</file>
     </qresource>
 </RCC>
