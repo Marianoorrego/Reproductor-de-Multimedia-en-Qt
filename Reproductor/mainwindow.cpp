@@ -154,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
       setWindowTitle("N E X O S");
-
+ QSettings settings("Nexos Media", "NEXOS");
 
 }
 
@@ -829,7 +829,7 @@ void MainWindow::on_pushButton_Previous_clicked()
 }
 void MainWindow::savePlaylist()
 {
-    QSettings settings("YourCompanyName", "YourAppName");
+    QSettings settings("Nexos Media", "NEXOS");
 
     // Guardar número de archivos
     settings.setValue("playlistCount", playlist.size());
@@ -842,7 +842,7 @@ void MainWindow::savePlaylist()
 
 void MainWindow::loadSavedPlaylist()
 {
-    QSettings settings("YourCompanyName", "YourAppName");
+    QSettings settings("Nexos Media", "NEXOS");
 
     // Obtener número de archivos
     int count = settings.value("playlistCount", 0).toInt();
@@ -881,7 +881,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (!playlist.isEmpty()) {
         QMessageBox::StandardButton reply = QMessageBox::question(
             this,
-            "Guardar Lista",
+            "NEXOS - Guardar Lista",
             "¿Desea guardar la lista de reproducción actual?",
             QMessageBox::Yes | QMessageBox::No
             );
