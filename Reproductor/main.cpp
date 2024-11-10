@@ -7,6 +7,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.setApplicationName("NEXOS");
+    a.setApplicationVersion("1.0");
+    a.setOrganizationName("Nexos Media");
 
     // Cargar la imagen original para el ícono
     QPixmap originalPixmap(":/imagenes/Nexoslogo.jpeg");
