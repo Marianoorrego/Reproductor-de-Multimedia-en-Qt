@@ -9,11 +9,13 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # Deshabilita todas las APIs
 # Archivos fuente del proyecto
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    pantallacarga.cpp
 
 # Archivos de cabecera del proyecto
 HEADERS += \
     mainwindow.h \
+    pantallacarga.h \
     ui_mainwindow.h
 
 # Archivos de diseño de la interfaz (formato .ui)
@@ -27,7 +29,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 # Archivos distribuidos con el proyecto (medios multimedia y recursos de imagen)
 DISTFILES += \
-
+    imagenes/Disco.mp4 \
     imagenes/avanzar.png \
     imagenes/fullscreen.png \
     imagenes/mute.png \

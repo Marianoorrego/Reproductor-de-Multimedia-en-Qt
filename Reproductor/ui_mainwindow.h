@@ -134,11 +134,11 @@ public:
 
         pushButton_Next = new QPushButton(centralwidget);
         pushButton_Next->setObjectName(QString::fromUtf8("pushButton_Next"));
-        pushButton_Next->setGeometry(QRect(210, 500, 51, 41));
+        pushButton_Next->setGeometry(QRect(230, 500, 51, 41));
 
         pushButton_Previous = new QPushButton(centralwidget);
         pushButton_Previous->setObjectName(QString::fromUtf8("pushButton_Previous"));
-        pushButton_Previous->setGeometry(QRect(150, 500, 51, 41));
+        pushButton_Previous->setGeometry(QRect(180, 500, 51, 41));
 
 
 

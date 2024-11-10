@@ -10,5 +10,8 @@
         <file>imagenes/next.png</file>
         <file>imagenes/prev.png</file>
         <file>imagenes/musica.mp4</file>
+        <file>imagenes/Nexoslogo.jpeg</file>
+        <file>imagenes/nexos.mp4</file>
+        <file>imagenes/nexossound.mp3</file>
     </qresource>
 </RCC>

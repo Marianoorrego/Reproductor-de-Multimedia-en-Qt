@@ -3,12 +3,25 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow),
-    Video(nullptr),
-    currentIndex(-1)
+    , ui(new Ui::MainWindow)
+    , Player(nullptr)
+    , BackgroundPlayer(nullptr)
+    , Video(nullptr)
+    , BackgroundVideo(nullptr)
+    , audioOutput(nullptr)
+    , IS_Pause(false)
+    , IS_Muted(false)
+    , mDuration(0)
+    , fileList(nullptr)
+    , currentNumber(0)
+    , currentIndex(-1)
+    , m_floatingLabel(nullptr)
+    , m_marqueeTimer(nullptr)
+    , m_scrollPosition(0)
 {
     ui->setupUi(this);
     resize(1100, 630);
+
     // Inicialización del reproductor de medios y configuración de salida de audio
     Player = new QMediaPlayer(this);
     audioOutput = new QAudioOutput(this);
@@ -27,8 +40,6 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *dockLayout = new QVBoxLayout(dockContents);
 
     // Lista de archivos
-    fileList = new QListWidget();
-
     fileList = new QListWidget();
     fileList->setDragEnabled(true); // Permitir arrastrar
     fileList->setDropIndicatorShown(true); // Mostrar el indicador de caída
@@ -69,10 +80,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_Seek_Backward->setIcon(QIcon(":/imagenes/retroceder.png"));
     ui->pushButton_Seek_Forward->setIcon(QIcon(":/imagenes/avanzar.png"));
     ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));
-
     ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png"));
     ui->pushButton_Previous->setIcon(QIcon(":/imagenes/prev.png"));
-
 
     // Configuración inicial de volumen
     ui->horizontalSlider_Volume->setMinimum(0);
@@ -83,46 +92,35 @@ MainWindow::MainWindow(QWidget *parent)
     // Conexión de las señales del reproductor
     connect(Player, &QMediaPlayer::durationChanged, this, &MainWindow::durationChanged);
     connect(Player, &QMediaPlayer::positionChanged, this, &MainWindow::positionChanged);
-
-    connect(fileList, &QListWidget::itemClicked, this, &MainWindow::onFileSelected);
-
-    ui->horizontalSlider_Duration->setRange(0, Player->duration() / 1000);
-
     connect(Player, &QMediaPlayer::errorOccurred, this, &MainWindow::onMediaError);
     connect(Player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onMediaStatusChanged);
 
-
-    // Atajo para el botón de Play/Pause
+    // Atajos de teclado
     QShortcut *playPauseShortcut = new QShortcut(QKeySequence("Space"), this);
     connect(playPauseShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Play_Pause_clicked);
 
-    // Atajo para el botón de Stop
     QShortcut *stopShortcut = new QShortcut(QKeySequence("Ctrl+S"), this);
     connect(stopShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Stop_clicked);
 
-    // Atajo para el botón de Mute/Unmute
     QShortcut *muteShortcut = new QShortcut(QKeySequence("M"), this);
     connect(muteShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Volume_clicked);
 
-    // Atajo para avanzar en el video
     QShortcut *seekForwardShortcut = new QShortcut(QKeySequence("Right"), this);
     connect(seekForwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Forward_clicked);
 
-    // Atajo para retroceder en el video
     QShortcut *seekBackwardShortcut = new QShortcut(QKeySequence("Left"), this);
     connect(seekBackwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Backward_clicked);
 
-    // Atajo para aumentar el volumen
     QShortcut *increaseVolumeShortcut = new QShortcut(QKeySequence("Up"), this);
     connect(increaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::increaseVolume);
 
-    // Atajo para disminuir el volumen
     QShortcut *decreaseVolumeShortcut = new QShortcut(QKeySequence("Down"), this);
     connect(decreaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::decreaseVolume);
 
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures); // Desactiva todas las características de desacople
+    // Desactivar características de desacople
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
 
-    // Agregar botón para mover arriba y abajo en la lista
+    // Agregar botones para mover arriba y abajo en la lista
     QPushButton *moveUpButton = new QPushButton("Mover Arriba", dockContents);
     QPushButton *moveDownButton = new QPushButton("Mover Abajo", dockContents);
     dockLayout->addWidget(moveUpButton);
@@ -132,7 +130,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
     connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);
-
 
     QString backgroundVideoPath = findBackgroundVideo();
     if (!backgroundVideoPath.isEmpty()) {
@@ -146,17 +143,44 @@ MainWindow::MainWindow(QWidget *parent)
     QPushButton *clearPlaylistButton = new QPushButton("Limpiar Lista", dockContents);
     dockLayout->addWidget(clearPlaylistButton);
     connect(clearPlaylistButton, &QPushButton::clicked, this, &MainWindow::clearPlaylist);
+
     // Atajo para limpiar la lista
     QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);
     connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);
+      createFloatingLabel();
+     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+      loadSavedPlaylist();
+
+
+
+      setWindowTitle("N E X O S");
+
+
 }
+
+
+
 
 
 MainWindow::~MainWindow()
 {
+    // Guardar la lista antes de cerrar
+    savePlaylist();
+
+    // Resto del código de limpieza existente
+    if (m_marqueeTimer) {
+        m_marqueeTimer->stop();
+        delete m_marqueeTimer;
+    }
+
+    if (m_floatingLabel) {
+        delete m_floatingLabel;
+    }
+    if (m_labelAnimation) {
+        delete m_labelAnimation;
+    }
     delete ui;
 }
-
 
 void MainWindow::onMediaError(QMediaPlayer::Error error)
 {
@@ -180,73 +204,14 @@ void MainWindow::onMediaError(QMediaPlayer::Error error)
 }
 
 
-void MainWindow::addFile()
-{
-    QFileDialog dialog(this);
-    dialog.setWindowTitle(tr("Seleccionar archivos o carpetas"));
-    dialog.setFileMode(QFileDialog::ExistingFiles);
-    dialog.setNameFilter(tr("Archivos multimedia (*.mp3 *.mp4)"));
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setDirectory(QDir::homePath());
-
-    // Hacer la ventana más grande
-    dialog.resize(800, 600);
-
-    // Agregar botón para seleccionar carpetas
-    QStringList fileNames;
-    QPushButton* folderButton = new QPushButton("Seleccionar Carpeta", &dialog);
-    connect(folderButton, &QPushButton::clicked, [&]() {
-        QString dir = QFileDialog::getExistingDirectory(&dialog, "Seleccionar Carpeta", QDir::homePath());
-        if (!dir.isEmpty()) {
-            QDir directory(dir);
-            QStringList filters;
-            filters << "*.mp3" << "*.mp4";
-            QStringList files = directory.entryList(filters, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
-
-            foreach(QString file, files) {
-                fileNames << directory.absoluteFilePath(file);
-            }
-            dialog.close();  // Cerramos el diálogo en lugar de usar done()
-        }
-    });
-
-    QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(dialog.layout());
-    if (layout) {
-        layout->addWidget(folderButton);
-    }
-
-    if (dialog.exec() == QDialog::Accepted) {
-        fileNames.append(dialog.selectedFiles());
-    }
-
-    // Procesar los archivos seleccionados
-    for (const QString& fileName : fileNames) {
-        QFileInfo fileInfo(fileName);
-        fileList->addItem(fileInfo.fileName());
-        fileMap[fileInfo.fileName()] = fileName;
-
-        // Agregar a la playlist si no está ya presente
-        if (!playlist.contains(fileName)) {
-            playlist.append(fileName);
-        }
-    }
-
-    initializePlaylistIndex();
-
-    // Si hay archivos válidos, reproducir el primero
-    if (currentIndex != -1) {
-        playFile(playlist[currentIndex]);
-    }
-
-}
 void MainWindow::on_pushButton_Volume_clicked()
 {
     IS_Muted = !IS_Muted; // Cambia el estado de silencio
     audioOutput->setVolume(IS_Muted ? 0 : ui->horizontalSlider_Volume->value() / 100.0);
     ui->pushButton_Volume->setIcon(IS_Muted ? QIcon(":/imagenes/mute.png") : QIcon(":/imagenes/sound.png"));
 }
-// Método que actualiza la duración máxima del video en el deslizador de progreso
 
+// Método que actualiza la duración máxima del video en el deslizador de progreso
 void MainWindow::durationChanged(qint64 duration)
 {
     mDuration = duration / 1000;
@@ -273,6 +238,7 @@ void MainWindow::positionChanged(qint64 duration)
         lastSecond = currentSecond;
     }
 }
+
 // Actualización del tiempo actual y total del video
 void MainWindow::updateDuration(qint64 Duration)
 {
@@ -286,6 +252,7 @@ void MainWindow::updateDuration(qint64 Duration)
         ui->label_Total_Time->setText(TotalTime.toString(Format));
     }
 }
+
 // Método para abrir un archivo de video o audio desde el explorador
 void MainWindow::on_actionOpen_triggered()
 {
@@ -295,6 +262,8 @@ void MainWindow::on_actionOpen_triggered()
         return;
     }
 
+    QFileInfo fileInfo(FileName);
+    QString displayName = fileInfo.fileName();
 
     if (FileName.endsWith(".mp3")) {
         // Reproducir archivo de audio y mostrar video de fondo
@@ -317,14 +286,10 @@ void MainWindow::on_actionOpen_triggered()
         Video->setVisible(true);
         Video->show();
     }
-}
 
-// Controla el cambio de la posición del video con el deslizador
-void MainWindow::on_horizontalSlider_Duration_valueChanged(int value)
-{
-    Player->setPosition(value * 1000);
+    // Mostrar marquee para el archivo abierto directamente
+    updateFloatingLabel(displayName);
 }
-
 // Control del botón de Play/Pause
 void MainWindow::on_pushButton_Play_Pause_clicked()
 {
@@ -340,7 +305,6 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
 
     // Asegúrate de que el video de fondo se muestre correctamente
     if (Player->mediaStatus() == QMediaPlayer::PlayingState) {
-        // Aquí puedes usar una variable para rastrear el archivo actual
         QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
         if (currentFile.endsWith(".mp3")) {
             QString applicationDir = QCoreApplication::applicationDirPath();
@@ -358,11 +322,27 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
 // Control del botón de Stop
 void MainWindow::on_pushButton_Stop_clicked()
 {
+    // Detener la reproducción
     Player->stop();
+
+    // Detener el marquee
+    if (m_marqueeTimer) {
+        m_marqueeTimer->stop();
+    }
+
+    // Ocultar el label flotante
+    if (m_floatingLabel) {
+        m_floatingLabel->hide();
+    }
+
+    // Resetear el estado de reproducción
+    IS_Pause = true;
+    ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
+
+    // Detener el video de fondo
+    BackgroundPlayer->stop();
+    BackgroundVideo->setVisible(false);
 }
-
-
-
 // Control del volumen
 void MainWindow::on_horizontalSlider_Volume_valueChanged(int value)
 {
@@ -375,7 +355,10 @@ void MainWindow::on_horizontalSlider_Volume_valueChanged(int value)
         ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png")); // Cambia a sonido
     }
 }
-
+void MainWindow::on_horizontalSlider_Duration_valueChanged(int value)
+{
+    Player->setPosition(value * 1000);
+}
 // Avance en el video (seek forward)
 void MainWindow::on_pushButton_Seek_Backward_clicked()
 {
@@ -396,60 +379,28 @@ void MainWindow::initializeVideoWidget() {
     Player->setVideoOutput(BackgroundVideo); // Asignar el video widget al reproductor
 }
 
-// Manejo de la selección de un archivo desde la lista para su reproducción
 
-void MainWindow::onFileSelected(QListWidgetItem *item)
-{
-    QString fileName = item->text();
-    QString fullFileName = fileMap.value(fileName);
-
-    if (!fullFileName.isEmpty()) {
-        // Actualizar el índice actual
-        currentIndex = fileList->row(item);
-
-        // Si la playlist está vacía o no coincide con el número de archivos en la lista
-        if (playlist.isEmpty() || playlist.size() != fileList->count()) {
-            // Reconstruir la playlist
-            playlist.clear();
-            for (int i = 0; i < fileList->count(); ++i) {
-                playlist.append(fileMap.value(fileList->item(i)->text()));
-            }
-        }
-
-        // Usar el método playFile para manejar la reproducción
-        playFile(fullFileName);
-    }
-}
 void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::EndOfMedia) {
-        int originalIndex = currentIndex;
-        int attempts = 0;
-
-        do {
-            currentIndex = (currentIndex + 1) % playlist.size();
-            attempts++;
-
-            // Prevenir bucle infinito
-            if (attempts > playlist.size()) {
-                Player->stop();
-                BackgroundPlayer->stop();
-                BackgroundVideo->setVisible(false);
-                return;
+        // Mostrar de nuevo el archivo actual en la lista
+        for (int i = 0; i < fileList->count(); ++i) {
+            QListWidgetItem* item = fileList->item(i);
+            if (!item->isHidden()) {
+                item->setHidden(false);
+                break;
             }
+        }
 
-        } while (!QFileInfo(playlist[currentIndex]).exists());
-
-        playFile(playlist[currentIndex]);
+        // Ir al siguiente archivo
+        on_pushButton_Next_clicked();
     }
 }
-
-
 void MainWindow::increaseVolume() {
     int currentVolume = ui->horizontalSlider_Volume->value();
     if (currentVolume < 100) {
         currentVolume += 5; // Aumenta el volumen en 5 unidades
-        ui->horizontalSlider_Volume->setValue(currentVolume);
+        ui-> horizontalSlider_Volume->setValue(currentVolume);
         audioOutput->setVolume(currentVolume / 100.0);
     }
 }
@@ -465,6 +416,10 @@ void MainWindow::decreaseVolume() {
 
 void MainWindow::moveItemUp()
 {
+    if (playlist.isEmpty()) {
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
+        return;
+    }
     int currentIndex = fileList->currentRow();
     if (currentIndex > 0) {
         QString currentItemText = fileList->item(currentIndex)->text();
@@ -477,6 +432,10 @@ void MainWindow::moveItemUp()
 
 void MainWindow::moveItemDown()
 {
+    if (playlist.isEmpty()) {
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
+        return;
+    }
     int currentIndex = fileList->currentRow();
     if (currentIndex < fileList->count() - 1) {
         QString currentItemText = fileList->item(currentIndex)->text();
@@ -507,49 +466,7 @@ void MainWindow::initializePlaylistIndex()
     currentIndex = -1;
 }
 
-void MainWindow::on_pushButton_Next_clicked()
-{
-    if (playlist.isEmpty()) return;
 
-    int originalIndex = currentIndex;
-    int attempts = 0;
-
-    do {
-        currentIndex = (currentIndex + 1) % playlist.size();
-        attempts++;
-
-        // Prevenir bucle infinito
-        if (attempts > playlist.size()) {
-            qDebug() << "No se encontró ningún archivo reproducible";
-            return;
-        }
-
-    } while (!QFileInfo(playlist[currentIndex]).exists());
-
-    playFile(playlist[currentIndex]);
-}
-
-void MainWindow::on_pushButton_Previous_clicked()
-{
-    if (playlist.isEmpty()) return;
-
-    int originalIndex = currentIndex;
-    int attempts = 0;
-
-    do {
-        currentIndex = (currentIndex - 1 + playlist.size()) % playlist.size();
-        attempts++;
-
-        // Prevenir bucle infinito
-        if (attempts > playlist.size()) {
-            qDebug() << "No se encontró ningún archivo reproducible";
-            return;
-        }
-
-    } while (!QFileInfo(playlist[currentIndex]).exists());
-
-    playFile(playlist[currentIndex]);
-}
 
 void MainWindow::playFile(const QString& filePath)
 {
@@ -561,6 +478,30 @@ void MainWindow::playFile(const QString& filePath)
         Video = nullptr;
     }
 
+    // Ocultar todos los archivos visibles antes de mostrar el nuevo
+    for (int i = 0; i < fileList->count(); ++i) {
+        fileList->item(i)->setHidden(false);
+    }
+
+    // Encontrar el item correspondiente al archivo
+    QString displayName;
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
+        if (it.value() == filePath) {
+            displayName = it.key(); // Usar la clave completa que incluye el número
+            break;
+        }
+    }
+
+    // Ocultar el archivo actual de la lista
+    QList<QListWidgetItem*> items = fileList->findItems(displayName.split(". ").last(), Qt::MatchExactly);
+    if (!items.isEmpty()) {
+        QListWidgetItem* currentItem = items.first();
+        currentItem->setHidden(true);
+
+        // Mostrar label flotante con el nombre del archivo
+        updateFloatingLabel(displayName);
+    }
+
     // Actualizar selección en la lista
     fileList->setCurrentRow(currentIndex);
 
@@ -568,7 +509,6 @@ void MainWindow::playFile(const QString& filePath)
         // Configuración para audio
         QString applicationDir = QCoreApplication::applicationDirPath();
         QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
-
 
         // Asegurarse de que el video de fondo esté configurado correctamente
         BackgroundPlayer->setVideoOutput(BackgroundVideo);
@@ -618,8 +558,12 @@ QString MainWindow::findBackgroundVideo() {
     return QString();
 }
 
-void MainWindow::clearPlaylist()
-{
+void MainWindow::clearPlaylist() {
+    if (playlist.isEmpty()) {
+        QMessageBox::information(this, "Información", "No hay archivos que limpiar");
+        return;
+    }
+
     // Mostrar un cuadro de diálogo de confirmación
     QMessageBox::StandardButton reply = QMessageBox::question(
         this,
@@ -647,4 +591,306 @@ void MainWindow::clearPlaylist()
         ui->label_Total_Time->setText("00:00:00");
         ui->horizontalSlider_Duration->setValue(0);
     }
+}
+void MainWindow::createFloatingLabel()
+{
+    // Crear el label flotante
+    m_floatingLabel = new QLabel(this);
+    m_floatingLabel->setStyleSheet(
+        "QLabel {"
+        "   background-color: transparent;" // Fondo completamente transparente
+        "   color: white;"
+        "   padding: 10px;"
+        "   border-radius: 10px;"
+        "   font-size: 16px;"
+        "}"
+        );
+    m_floatingLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    m_floatingLabel->setAttribute(Qt::WA_TranslucentBackground); // Hacer el fondo completamente transparente
+    m_floatingLabel->hide();
+
+    // Crear timer para el efecto marquee
+    m_marqueeTimer = new QTimer(this);
+    connect(m_marqueeTimer, &QTimer::timeout, this, &MainWindow::updateMarqueeText);
+}
+void MainWindow::updateFloatingLabel(const QString& fullKey)
+{
+    if (!m_floatingLabel) {
+        createFloatingLabel();
+    }
+
+    // Coordenadas basadas en el diseño del UI
+    int labelWidth = 350;  // Ancho especificado
+    int labelHeight = 40;  // Altura
+
+    // Coordenadas exactas
+    int labelX = 500;  // X
+    int labelY = 580;  // Y
+
+    m_floatingLabel->setGeometry(labelX, labelY, labelWidth, labelHeight);
+    m_floatingLabel->setStyleSheet(
+        "QLabel {"
+        "   background-color: rgba(0, 0, 0, 180);" // Fondo semi-transparente
+        "   color: white;"
+        "   padding: 5px;"
+        "   border-radius: 10px;"
+        "   font-size: 14px;"
+        "}"
+        );
+    m_floatingLabel->setAlignment(Qt::AlignCenter);
+    m_floatingLabel->show();
+
+    // Extraer solo el nombre del archivo del fullKey
+    m_currentFileName = fullKey.split(". ").last();
+    m_scrollPosition = 0;
+
+    // Iniciar el timer para el efecto marquee
+    m_marqueeTimer->start(100); // Actualizar cada 100 ms
+}
+void MainWindow::updateMarqueeText()
+{
+    if (!m_floatingLabel || m_currentFileName.isEmpty()) return;
+
+    // Preparar el texto para el marquee
+    QString displayText = m_currentFileName + "     " + m_currentFileName;
+
+    // Ajustar el corte de texto al ancho del label
+    int visibleChars = m_floatingLabel->width() / 6; // Reducir el divisor para más rapidez
+    QString shownText = displayText.mid(m_scrollPosition, visibleChars);
+    m_floatingLabel->setText(shownText);
+
+    // Incrementar la posición de desplazamiento
+    m_scrollPosition++;
+
+    // Reiniciar si se ha completado el ciclo
+    if (m_scrollPosition > m_currentFileName.length() + 5) {
+        m_scrollPosition = 0;
+    }
+}
+void MainWindow::addFile()
+{
+    QFileDialog dialog(this);
+    dialog.setWindowTitle(tr("Seleccionar archivos o carpetas"));
+    dialog.setFileMode(QFileDialog::ExistingFiles);
+    dialog.setNameFilter(tr("Archivos multimedia (*.mp3 *.mp4)"));
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setDirectory(QDir::homePath());
+
+    dialog.resize(800, 600);
+
+    QStringList fileNames;
+    QPushButton* folderButton = new QPushButton("Seleccionar Carpeta", &dialog);
+    connect(folderButton, &QPushButton::clicked, [&]() {
+        QString dir = QFileDialog::getExistingDirectory(&dialog, "Seleccionar Carpeta", QDir::homePath());
+        if (!dir.isEmpty()) {
+            QDir directory(dir);
+            QStringList filters;
+            filters << "*.mp3" << "*.mp4";
+            QStringList files = directory.entryList(filters, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+
+            foreach(QString file, files) {
+                fileNames << directory.absoluteFilePath(file);
+            }
+            dialog.close();
+        }
+    });
+
+    QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(dialog.layout());
+    if (layout) {
+        layout->addWidget(folderButton);
+    }
+
+    if (dialog.exec() == QDialog::Accepted) {
+        fileNames.append(dialog.selectedFiles());
+    }
+
+    // Crear un mapa temporal para ordenar
+    QMap<int, QPair<QString, QString>> numberedFiles;
+    int nextNumber = fileList->count() + 1;
+
+    // Procesar los archivos seleccionados
+    for (const QString& fileName : fileNames) {
+        QFileInfo fileInfo(fileName);
+
+        // Usar el siguiente número disponible
+        numberedFiles[nextNumber] = qMakePair(fileInfo.fileName(), fileName);
+        nextNumber++;
+    }
+
+    // Agregar los archivos a la lista existente
+    for (auto it = numberedFiles.begin(); it != numberedFiles.end(); ++it) {
+        int number = it.key();
+        QString originalFileName = it.value().first;
+        QString fullFileName = it.value().second;
+
+        // Almacenar el número internamente, pero mostrar solo el nombre del archivo
+        fileList->addItem(originalFileName);
+
+        // Crear una clave que incluya el número para mantener la lógica interna
+        QString internalKey = QString("%1. %2").arg(number).arg(originalFileName);
+        fileMap[internalKey] = fullFileName;
+        playlist.append(fullFileName);
+    }
+
+    // Si no hay reproducción actual, reproducir el primer archivo
+    if (Player->mediaStatus() != QMediaPlayer::PlayingState && !playlist.isEmpty()) {
+        currentNumber = 1;
+        playFile(playlist.first());
+    }
+}
+
+void MainWindow::onFileSelected(QListWidgetItem *item)
+{
+    QString displayName = item->text();
+
+    // Buscar la clave completa en el mapa que coincida con el nombre del archivo
+    QString fullKey;
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
+        if (it.key().endsWith(displayName)) {
+            fullKey = it.key();
+            break;
+        }
+    }
+
+    QString fullFileName = fileMap.value(fullKey);
+
+    if (!fullFileName.isEmpty()) {
+        // Extraer el número del principio de la clave interna
+        currentNumber = fullKey.split(".")[0].toInt();
+        playFile(fullFileName);
+    }
+}
+
+void MainWindow::on_pushButton_Next_clicked()
+{
+
+        if (playlist.isEmpty()) {
+            QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
+            return;
+        }
+
+    // Incrementar el número actual
+    currentNumber++;
+
+    // Si supera el número máximo, volver al primero
+    if (currentNumber > fileList->count()) {
+        currentNumber = 1;
+    }
+
+    // Encontrar el archivo correspondiente al número actual
+    QString searchName = QString("%1.").arg(currentNumber);
+
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
+        if (it.key().startsWith(searchName)) {
+            // Encontrar el ítem correspondiente en la lista
+            QString fileName = it.key().split(". ").last();
+            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);
+
+            if (!items.isEmpty()) {
+                fileList->setCurrentItem(items.first());
+                playFile(it.value());
+                break;
+            }
+        }
+    }
+}
+
+void MainWindow::on_pushButton_Previous_clicked()
+{
+    if (playlist.isEmpty()) {
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
+        return;
+    }
+
+    // Decrementar el número actual
+    currentNumber--;
+
+    // Si es menor que 1, ir al último
+    if (currentNumber < 1) {
+        currentNumber = fileList->count();
+    }
+
+    // Encontrar el archivo correspondiente al número actual
+    QString searchName = QString("%1.").arg(currentNumber);
+
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
+        if (it.key().startsWith(searchName)) {
+            // Encontrar el ítem correspondiente en la lista
+            QString fileName = it.key().split(". ").last();
+            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);
+
+            if (!items.isEmpty()) {
+                fileList->setCurrentItem(items.first());
+                playFile(it.value());
+                break;
+            }
+        }
+    }
+}
+void MainWindow::savePlaylist()
+{
+    QSettings settings("YourCompanyName", "YourAppName");
+
+    // Guardar número de archivos
+    settings.setValue("playlistCount", playlist.size());
+
+    // Guardar cada ruta de archivo
+    for (int i = 0; i < playlist.size(); ++i) {
+        settings.setValue(QString("playlist_file_%1").arg(i), playlist[i]);
+    }
+}
+
+void MainWindow::loadSavedPlaylist()
+{
+    QSettings settings("YourCompanyName", "YourAppName");
+
+    // Obtener número de archivos
+    int count = settings.value("playlistCount", 0).toInt();
+
+    // Cargar cada archivo
+    for (int i = 0; i < count; ++i) {
+        QString filePath = settings.value(QString("playlist_file_%1").arg(i)).toString();
+
+        // Verificar si el archivo existe antes de agregarlo
+        if (QFileInfo::exists(filePath)) {
+            addFileToPlaylist(filePath);
+        }
+    }
+}
+void MainWindow::addFileToPlaylist(const QString& filePath)
+{
+    QFileInfo fileInfo(filePath);
+
+    // Verificar si el archivo ya está en la lista
+    for (const QString& existingPath : playlist) {
+        if (QFileInfo(existingPath) == fileInfo) {
+            return; // Ya existe, no agregar duplicados
+        }
+    }
+
+    // Agregar a la lista
+    int nextNumber = fileList->count() + 1;
+    QString internalKey = QString("%1. %2").arg(nextNumber).arg(fileInfo.fileName());
+
+    fileList->addItem(fileInfo.fileName());
+    fileMap[internalKey] = filePath;
+    playlist.append(filePath);
+}
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (!playlist.isEmpty()) {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this,
+            "Guardar Lista",
+            "¿Desea guardar la lista de reproducción actual?",
+            QMessageBox::Yes | QMessageBox::No
+            );
+
+        if (reply == QMessageBox::Yes) {
+            savePlaylist();
+        }
+    }
+
+    // Llamar al método de la clase padre para manejar el cierre
+    QMainWindow::closeEvent(event);
 }

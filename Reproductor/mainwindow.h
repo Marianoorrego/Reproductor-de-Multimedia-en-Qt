@@ -14,8 +14,12 @@
 #include <QDirIterator>
 #include <QDir>
 #include <QShortcut>
-
-
+#include <QLabel>
+#include <QPropertyAnimation>
+#include <QTimer>
+#include <QSettings>
+#include <QFileInfo>
+#include <QCloseEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; } // Declaración del espacio de nombres para la interfaz de usuario
@@ -38,7 +42,7 @@ private slots:
     void on_actionOpen_triggered();
 
     // Slot para manejar cambios en el slider de duración
-    void on_horizontalSlider_Duration_valueChanged(int value);
+   void on_horizontalSlider_Duration_valueChanged(int value);
 
     // Slot para manejar el botón de reproducción/pausa
     void on_pushButton_Play_Pause_clicked();
@@ -81,6 +85,10 @@ private slots:
     void on_pushButton_Next_clicked();   // Slot para el botón siguiente
     void on_pushButton_Previous_clicked(); // Slot para el botón anterior
     void playFile(const QString& filePath);
+    void updateMarqueeText();
+
+
+
 private:
     // Puntero a la interfaz de usuario
     Ui::MainWindow *ui;
@@ -121,11 +129,27 @@ private:
 
     // Mapa de archivos con sus rutas
     QMap<QString, QString> fileMap;
-
+    int currentNumber = 1;
     int currentIndex = -1; // Índice del archivo actual
     QStringList playlist;   // Lista de archivos para la reproducción
     void initializePlaylistIndex();
- void clearPlaylist();
+    void clearPlaylist();
+    QLabel *m_floatingLabel;
+    QPropertyAnimation *m_labelAnimation;
+
+    void createFloatingLabel();
+    void updateFloatingLabel(const QString& fileName);
+
+    QTimer *m_marqueeTimer;
+    QString m_currentFileName;
+    int m_scrollPosition;
+    void savePlaylist();
+    void loadSavedPlaylist();
+    void addFileToPlaylist(const QString& filePath);
+
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };
 
 

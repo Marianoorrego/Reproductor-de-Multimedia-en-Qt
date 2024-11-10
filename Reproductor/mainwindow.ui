@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>821</width>
-    <height>592</height>
+    <height>662</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -168,30 +168,43 @@
      <string>00:00:00</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="pushButton_Stop_2">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>520</y>
+      <x>170</x>
+      <y>510</y>
       <width>51</width>
-      <height>31</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_Random">
+   <widget class="QPushButton" name="pushButton_Stop_3">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>520</y>
+      <x>220</x>
+      <y>510</y>
       <width>51</width>
-      <height>31</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>560</y>
+      <width>361</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>PushButton</string>
     </property>
    </widget>
   </widget>
@@ -201,7 +214,7 @@
      <x>0</x>
      <y>0</y>
      <width>821</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSelect_Video_File">
