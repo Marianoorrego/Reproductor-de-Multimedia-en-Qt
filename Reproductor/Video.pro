@@ -5,7 +5,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  # Agrega el módulo de widgets 
 CONFIG += c++17  # Configura el proyecto para usar la versión de C++ 17
 
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # Deshabilita todas las APIs obsoletas antes de Qt 6.0.0
-
+TARGET = NEXOS
+TEMPLATE = app
 # Archivos fuente del proyecto
 SOURCES += \
     main.cpp \
