@@ -13,5 +13,6 @@
         <file>imagenes/Nexoslogo.jpeg</file>
         <file>imagenes/nexos.mp4</file>
         <file>imagenes/nexossound.mp3</file>
+        <file>imagenes/nexosbackgroud.mp4</file>
     </qresource>
 </RCC>
