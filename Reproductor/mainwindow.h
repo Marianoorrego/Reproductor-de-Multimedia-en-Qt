@@ -1,16 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>      // Clase base para la ventana principal de la aplicación
-#include <QMediaPlayer>     // Clase para la reproducción de audio y video
-#include <QAudioOutput>     // Clase para la salida de audio
-#include <QVideoWidget>     // Clase para la visualización de video
-#include <QFileDialog>      // Clase para mostrar diálogos de selección de archivos
-#include <QMessageBox>      // Clase para mostrar cuadros de mensaje
-#include <QTime>            // Clase para manejar tiempo
-#include <QDockWidget>      // Clase para crear paneles acoplables
-#include <QListWidget>      // Clase para mostrar listas de elementos
-#include <QMap>             // Clase para mapear archivos a rutas
+#include <QMainWindow>      // Ventana principal de la aplicación
+#include <QMediaPlayer>     // Reproducción de audio y video
+#include <QAudioOutput>     // Salida de audio
+#include <QVideoWidget>     // Visualización de video
+#include <QFileDialog>      // Diálogos de selección de archivos
+#include <QMessageBox>      // Cuadros de mensaje
+#include <QTime>            // Manejo de tiempo
+#include <QDockWidget>      // Paneles acoplables
+#include <QListWidget>      // Listas de elementos
+#include <QMap>             // Mapeo de archivos a rutas
 #include <QDirIterator>
 #include <QDir>
 #include <QShortcut>
@@ -22,7 +22,7 @@
 #include <QCloseEvent>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; } // Declaración del espacio de nombres para la interfaz de usuario
+namespace Ui { class MainWindow; } // Espacio de nombres para la interfaz de usuario
 QT_END_NAMESPACE
 
 // Clase MainWindow que representa la ventana principal de la aplicación
@@ -31,126 +31,81 @@ class MainWindow : public QMainWindow
     Q_OBJECT // Macro que permite la utilización de señales y slots
 
 public:
-    // Constructor de la clase, inicializa la ventana principal
-    MainWindow(QWidget *parent = nullptr);
-
-    // Destructor de la clase
-    ~MainWindow();
-
-private slots:
-    // Slot para manejar la acción de abrir un archivo
-    void on_actionOpen_triggered();
-
-    // Slot para manejar cambios en el slider de duración
-   void on_horizontalSlider_Duration_valueChanged(int value);
-
-    // Slot para manejar el botón de reproducción/pausa
-    void on_pushButton_Play_Pause_clicked();
-
-    // Slot para manejar el botón de parada
-    void on_pushButton_Stop_clicked();
-
-    // Slot para manejar el botón de volumen
-    void on_pushButton_Volume_clicked();
-
-    // Slot para manejar cambios en el slider de volumen
-    void on_horizontalSlider_Volume_valueChanged(int value);
-
-    // Slot para manejar el botón de retroceso
-    void on_pushButton_Seek_Backward_clicked();
-
-    // Slot para manejar el botón de avance
-    void on_pushButton_Seek_Forward_clicked();
-
-    // Slot para manejar la selección de un archivo de la lista
-    void onFileSelected(QListWidgetItem *item);
-
-    // Slot para manejar cambios en la duración del medio
-    void durationChanged(qint64 duration);
-
-    // Slot para manejar cambios en la posición de reproducción
-    void positionChanged(qint64 duration);
-
-    // Agregar un archivo a la lista de reproducción
-    void addFile();
-
-    void onMediaError(QMediaPlayer::Error error);
-    void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
-    void increaseVolume();
-    void decreaseVolume();
-    void initializeVideoWidget();
-
-    void moveItemUp();
-    void moveItemDown();
-    void on_pushButton_Next_clicked();   // Slot para el botón siguiente
-    void on_pushButton_Previous_clicked(); // Slot para el botón anterior
-    void playFile(const QString& filePath);
-    void updateMarqueeText();
-
-
-
-private:
-    // Puntero a la interfaz de usuario
-    Ui::MainWindow *ui;
-    QString findBackgroundVideo();
-    // Puntero al reproductor de medios
-    QMediaPlayer *Player;
-
-    // Puntero al reproductor de fondo para videos
-    QMediaPlayer *BackgroundPlayer;
-
-    // Puntero al widget de video
-    QVideoWidget *Video;
-
-    // Puntero al widget de video de fondo
-    QVideoWidget *BackgroundVideo;
-
-    // Puntero a la salida de audio
-    QAudioOutput *audioOutput;
-
-    // Variables de estado para la pausa y el silencio
-    bool IS_Pause = true;
-    bool IS_Muted = false;
-
-    // Duración total del archivo multimedia
-    qint64 mDuration;
-
-    // Actualiza la duración mostrada en la interfaz
-    void updateDuration(qint64 Duration);
-
-    // Muestra la portada del archivo seleccionado
-    void showCover(const QString &fileName);
-
-    // Puntero a un panel acoplable para la lista de archivos
-    QDockWidget *dock;
-
-    // Puntero a la lista de archivos
-    QListWidget *fileList;
-
-    // Mapa de archivos con sus rutas
-    QMap<QString, QString> fileMap;
-    int currentNumber = 1;
-    int currentIndex = -1; // Índice del archivo actual
-    QStringList playlist;   // Lista de archivos para la reproducción
-    void initializePlaylistIndex();
-    void clearPlaylist();
-    QLabel *m_floatingLabel;
-    QPropertyAnimation *m_labelAnimation;
-
-    void createFloatingLabel();
-    void updateFloatingLabel(const QString& fileName);
-
-    QTimer *m_marqueeTimer;
-    QString m_currentFileName;
-    int m_scrollPosition;
-    void savePlaylist();
-    void loadSavedPlaylist();
-    void addFileToPlaylist(const QString& filePath);
-
+    explicit MainWindow(QWidget *parent = nullptr); // Constructor
+    ~MainWindow();                                  // Destructor
 
 protected:
-    void closeEvent(QCloseEvent *event) override;
-};
+    void closeEvent(QCloseEvent *event) override;   // Evento al cerrar la ventana
 
+private slots:
+    // Slots de interfaz de usuario para botones y sliders
+    void on_actionOpen_triggered();                       // Abrir archivo
+    void on_horizontalSlider_Duration_valueChanged(int value); // Cambiar duración
+    void on_pushButton_Play_Pause_clicked();              // Reproducir/pausar
+    void on_pushButton_Stop_clicked();                    // Parar
+    void on_pushButton_Volume_clicked();                  // Silencio
+    void on_horizontalSlider_Volume_valueChanged(int value); // Cambiar volumen
+    void on_pushButton_Seek_Backward_clicked();           // Retroceder
+    void on_pushButton_Seek_Forward_clicked();            // Adelantar
+    void on_pushButton_Next_clicked();                    // Siguiente
+    void on_pushButton_Previous_clicked();                // Anterior
+    void onFileSelected(QListWidgetItem *item);           // Selección de archivo
+    void onMediaError(QMediaPlayer::Error error);         // Error en el medio
+    void onMediaStatusChanged(QMediaPlayer::MediaStatus status); // Cambio de estado
+
+    // Slots para manejar actualizaciones de reproducción
+    void durationChanged(qint64 duration);                // Cambio de duración
+    void positionChanged(qint64 duration);                // Cambio de posición
+    void increaseVolume();                                // Aumentar volumen
+    void decreaseVolume();                                // Disminuir volumen
+
+    // Slots personalizados para funcionalidades adicionales
+    void addFile();                                       // Agregar archivo
+    void playFile(const QString& filePath);               // Reproducir archivo
+    void updateMarqueeText();                             // Actualizar texto flotante
+
+private:
+    Ui::MainWindow *ui;                                   // Interfaz de usuario
+    QMediaPlayer *Player;                                 // Reproductor principal
+    QMediaPlayer *BackgroundPlayer;                       // Reproductor de fondo
+    QVideoWidget *Video;                                  // Widget de video principal
+    QVideoWidget *BackgroundVideo;                        // Widget de video de fondo
+    QAudioOutput *audioOutput;                            // Salida de audio
+
+    // Variables de estado
+    bool IS_Pause = true;                                 // Estado de pausa
+    bool IS_Muted = false;                                // Estado de silencio
+    qint64 mDuration;                                     // Duración del medio
+
+    // Elementos de interfaz adicionales
+    QDockWidget *dock;                                    // Panel acoplable de archivos
+    QListWidget *fileList;                                // Lista de archivos
+    QLabel *m_floatingLabel;                              // Etiqueta flotante
+    QPropertyAnimation *m_labelAnimation;                 // Animación de la etiqueta
+
+    // Reproducción y gestión de lista de archivos
+    QStringList playlist;                                 // Lista de reproducción
+    QMap<QString, QString> fileMap;                       // Mapa de archivos con rutas
+    int currentNumber = 1;                                // Número actual
+    int currentIndex = -1;                                // Índice de reproducción actual
+
+    // Elementos de texto flotante
+    QTimer *m_marqueeTimer;                               // Temporizador de desplazamiento
+    QString m_currentFileName;                            // Nombre del archivo actual
+    int m_scrollPosition;                                 // Posición de desplazamiento
+
+    // Métodos auxiliares
+    void initializeVideoWidget();                         // Inicializar widget de video
+    void initializePlaylistIndex();                       // Inicializar índice de lista
+    void updateDuration(qint64 Duration);                 // Actualizar duración
+    void showCover(const QString &fileName);              // Mostrar portada del archivo
+    void createFloatingLabel();                           // Crear etiqueta flotante
+    void updateFloatingLabel(const QString& fileName);    // Actualizar etiqueta flotante
+    void savePlaylist();                                  // Guardar lista de reproducción
+    void loadSavedPlaylist();                             // Cargar lista guardada
+    void addFileToPlaylist(const QString& filePath);      // Agregar archivo a lista
+    QString findBackgroundVideo();                        // Encontrar video de fondo
+    void clearPlaylist();                                 // Limpiar lista de reproducción
+};
 
 #endif // MAINWINDOW_H
