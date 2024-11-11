@@ -19,6 +19,70 @@ MainWindow::MainWindow(QWidget *parent)
     , m_marqueeTimer(nullptr)
     , m_scrollPosition(0)
 {
+    qApp->setStyle("Fusion");  // Mantener Fusion
+
+    QPalette darkPalette;
+    darkPalette.setColor(QPalette::Window, QColor(20, 20, 20));           // Más oscuro
+    darkPalette.setColor(QPalette::WindowText, QColor(220, 220, 220));    // Texto gris claro
+    darkPalette.setColor(QPalette::Base, QColor(15, 15, 15));             // Base aún más oscura
+    darkPalette.setColor(QPalette::AlternateBase, QColor(25, 25, 25));    // Fondo alternativo
+    darkPalette.setColor(QPalette::ToolTipBase, QColor(30, 30, 30));      // Tooltips oscuros
+    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
+    darkPalette.setColor(QPalette::Text, QColor(220, 220, 220));          // Texto gris claro
+    darkPalette.setColor(QPalette::Button, QColor(25, 25, 25));           // Botones muy oscuros
+    darkPalette.setColor(QPalette::ButtonText, Qt::white);
+    darkPalette.setColor(QPalette::BrightText, Qt::red);
+    darkPalette.setColor(QPalette::Link, QColor(50, 100, 200));           // Azul más suave
+    darkPalette.setColor(QPalette::Highlight, QColor(50, 100, 200));      // Color de selección
+    darkPalette.setColor(QPalette::HighlightedText, Qt::white);
+
+    qApp->setPalette(darkPalette);
+
+    qApp->setStyleSheet(R"(
+    * {
+        background-color: #141414;  /* Aún más oscuro */
+        color: #DDDDDD;             /* Texto gris claro */
+    }
+    QListWidget {
+        background-color: #0F0F0F;  /* Negro profundo */
+        border: 1px solid #333333;
+    }
+    QLineEdit, QTextEdit {
+        background-color: #0A0A0A;  /* Negro más profundo */
+        color: #DDDDDD;
+        border: 1px solid #333333;
+    }
+    QPushButton {
+        background-color: #1E1E1E;  /* Gris muy oscuro */
+        color: #DDDDDD;
+        border: 1px solid #333333;
+        padding: 5px;
+        border-radius: 3px;
+    }
+    QPushButton:hover {
+        background-color: #262626;  /* Ligero cambio al pasar el mouse */
+    }
+    QPushButton:pressed {
+        background-color: #111111;  /* Aún más oscuro al presionar */
+    }
+    QSlider::handle:horizontal {
+        background: #3A6EA5;  /* Azul más oscuro */
+        width: 18px;
+        margin: -5px 0;
+        border-radius: 9px;
+    }
+    QSlider::groove:horizontal {
+        background: #2A2A2A;
+        height: 8px;
+    }
+    QMenuBar, QMenu {
+        background-color: #141414;
+        color: #DDDDDD;
+    }
+    QMenu::item:selected {
+        background-color: #2A2A2A;
+    }
+)");
     ui->setupUi(this);
     resize(1100, 630);
 
@@ -120,25 +184,13 @@ MainWindow::MainWindow(QWidget *parent)
     // Desactivar características de desacople
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
 
-    // Agregar botones para mover arriba y abajo en la lista
-    QPushButton *moveUpButton = new QPushButton("Mover Arriba", dockContents);
-    QPushButton *moveDownButton = new QPushButton("Mover Abajo", dockContents);
-    dockLayout->addWidget(moveUpButton);
-    dockLayout->addWidget(moveDownButton);
-    connect(moveUpButton, &QPushButton::clicked, this, &MainWindow::moveItemUp);
-    connect(moveDownButton, &QPushButton::clicked, this, &MainWindow::moveItemDown);
+
 
     connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
     connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);
 
-    QString backgroundVideoPath = findBackgroundVideo();
-    if (!backgroundVideoPath.isEmpty()) {
-        BackgroundPlayer->setSource(QUrl::fromLocalFile(backgroundVideoPath));
-    } else {
-        QMessageBox::warning(this, "Advertencia",
-                             "No se pudo encontrar el video de fondo predeterminado. "
-                             "La reproducción de audio no mostrará video de fondo.");
-    }
+    // Establecer el video de fondo directamente
+    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
 
     QPushButton *clearPlaylistButton = new QPushButton("Limpiar Lista", dockContents);
     dockLayout->addWidget(clearPlaylistButton);
@@ -147,14 +199,14 @@ MainWindow::MainWindow(QWidget *parent)
     // Atajo para limpiar la lista
     QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);
     connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);
-      createFloatingLabel();
-     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-      loadSavedPlaylist();
+    createFloatingLabel();
+    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+    loadSavedPlaylist();
 
 
 
-      setWindowTitle("N E X O S");
- QSettings settings("Nexos Media", "NEXOS");
+    setWindowTitle("N E X O S");
+    QSettings settings("Nexos Media", "NEXOS");
 
 }
 
@@ -256,7 +308,7 @@ void MainWindow::updateDuration(qint64 Duration)
 // Método para abrir un archivo de video o audio desde el explorador
 void MainWindow::on_actionOpen_triggered()
 {
-    QString FileName = QFileDialog::getOpenFileName(this, tr("Seleccione Un video"), "", tr("MP4 Files (*.mp4);;MP3 Files (*.mp3)"));
+    QString FileName = QFileDialog::getOpenFileName(this, tr("Seleccione Un video"), "", tr("MP4 Files (*.mp4), MP3 Files (*.mp3)"));
 
     if (FileName.isEmpty()) {
         return;
@@ -266,9 +318,8 @@ void MainWindow::on_actionOpen_triggered()
     QString displayName = fileInfo.fileName();
 
     if (FileName.endsWith(".mp3")) {
-        // Reproducir archivo de audio y mostrar video de fondo
-        QString applicationDir = QCoreApplication::applicationDirPath();
-        QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+
+        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
 
         BackgroundVideo->setVisible(true);
         BackgroundPlayer->play();
@@ -307,8 +358,7 @@ void MainWindow::on_pushButton_Play_Pause_clicked()
     if (Player->mediaStatus() == QMediaPlayer::PlayingState) {
         QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
         if (currentFile.endsWith(".mp3")) {
-            QString applicationDir = QCoreApplication::applicationDirPath();
-            QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+            BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
 
             BackgroundVideo->setVisible(true);
             BackgroundPlayer->play();
@@ -395,6 +445,15 @@ void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         // Ir al siguiente archivo
         on_pushButton_Next_clicked();
     }
+
+    // Actualizar el botón de Play/Pause según el estado del reproductor
+    if (Player->mediaStatus() == QMediaPlayer::PlayingState) {
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/pausa.png"));
+        IS_Pause = false; // Asegúrate de que el estado de pausa sea correcto
+    } else if (Player->mediaStatus() == QMediaPlayer::PausedState) {
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
+        IS_Pause = true; // Asegúrate de que el estado de pausa sea correcto
+    }
 }
 void MainWindow::increaseVolume() {
     int currentVolume = ui->horizontalSlider_Volume->value();
@@ -411,38 +470,6 @@ void MainWindow::decreaseVolume() {
         currentVolume -= 5; // Disminuye el volumen en 5 unidades
         ui->horizontalSlider_Volume->setValue(currentVolume);
         audioOutput->setVolume(currentVolume / 100.0);
-    }
-}
-
-void MainWindow::moveItemUp()
-{
-    if (playlist.isEmpty()) {
-        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
-        return;
-    }
-    int currentIndex = fileList->currentRow();
-    if (currentIndex > 0) {
-        QString currentItemText = fileList->item(currentIndex)->text();
-        QString previousItemText = fileList->item(currentIndex - 1)->text();
-        fileList->item(currentIndex - 1)->setText(currentItemText);
-        fileList->item(currentIndex)->setText(previousItemText);
-        fileList->setCurrentRow(currentIndex - 1);
-    }
-}
-
-void MainWindow::moveItemDown()
-{
-    if (playlist.isEmpty()) {
-        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
-        return;
-    }
-    int currentIndex = fileList->currentRow();
-    if (currentIndex < fileList->count() - 1) {
-        QString currentItemText = fileList->item(currentIndex)->text();
-        QString nextItemText = fileList->item(currentIndex + 1)->text();
-        fileList->item(currentIndex + 1)->setText(currentItemText);
-        fileList->item(currentIndex)->setText(nextItemText);
-        fileList->setCurrentRow(currentIndex + 1);
     }
 }
 
@@ -507,8 +534,7 @@ void MainWindow::playFile(const QString& filePath)
 
     if (filePath.endsWith(".mp3")) {
         // Configuración para audio
-        QString applicationDir = QCoreApplication::applicationDirPath();
-        QString backgroundVideoPath = applicationDir + "/Video/imagenes/musica.mp4";
+        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
 
         // Asegurarse de que el video de fondo esté configurado correctamente
         BackgroundPlayer->setVideoOutput(BackgroundVideo);
@@ -536,26 +562,7 @@ void MainWindow::playFile(const QString& filePath)
 }
 
 QString MainWindow::findBackgroundVideo() {
-    QString applicationDir = QCoreApplication::applicationDirPath();
-    QString defaultPath = applicationDir + "/Video/imagenes/musica.mp4";
-
-    QStringList possiblePaths = {
-        defaultPath,
-        applicationDir + "/../Video/imagenes/musica.mp4",
-        applicationDir + "/../../Video/imagenes/musica.mp4",
-        QDir::homePath() + "/Desktop/Proyecto final/Video/imagenes/musica.mp4"
-    };
-
-    for (const QString& path : possiblePaths) {
-        QFileInfo fileInfo(path);
-        if (fileInfo.exists()) {
-            qDebug() << "Video de fondo encontrado: " << path;
-            return path;
-        }
-    }
-
-    qWarning() << "No se encontró ningún video de fondo";
-    return QString();
+    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
 }
 
 void MainWindow::clearPlaylist() {
@@ -564,15 +571,22 @@ void MainWindow::clearPlaylist() {
         return;
     }
 
-    // Mostrar un cuadro de diálogo de confirmación
-    QMessageBox::StandardButton reply = QMessageBox::question(
-        this,
-        "Limpiar Lista",
-        "¿Está seguro que desea limpiar la lista de reproducción?",
-        QMessageBox::Yes | QMessageBox::No
-        );
+    // Crear un cuadro de diálogo de confirmación
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Limpiar Lista");
+    msgBox.setText("¿Está seguro que desea limpiar la lista de reproducción?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 
-    if (reply == QMessageBox::Yes) {
+    // Personalizar el texto de los botones
+    QAbstractButton *yesButton = msgBox.button(QMessageBox::Yes);
+    yesButton->setText("Sí");
+
+    QAbstractButton *noButton = msgBox.button(QMessageBox::No);
+    noButton->setText("No");
+
+    msgBox.exec(); // Mostrar el cuadro de diálogo
+
+    if (msgBox.clickedButton() == yesButton) {
         // Detener la reproducción
         Player->stop();
         BackgroundPlayer->stop();
@@ -764,10 +778,10 @@ void MainWindow::onFileSelected(QListWidgetItem *item)
 void MainWindow::on_pushButton_Next_clicked()
 {
 
-        if (playlist.isEmpty()) {
-            QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
-            return;
-        }
+    if (playlist.isEmpty()) {
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
+        return;
+    }
 
     // Incrementar el número actual
     currentNumber++;
@@ -879,18 +893,29 @@ void MainWindow::addFileToPlaylist(const QString& filePath)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (!playlist.isEmpty()) {
-        QMessageBox::StandardButton reply = QMessageBox::question(
-            this,
-            "NEXOS - Guardar Lista",
-            "¿Desea guardar la lista de reproducción actual?",
-            QMessageBox::Yes | QMessageBox::No
-            );
+        // Crear un cuadro de diálogo de confirmación
+        QMessageBox msgBox(this);
+        msgBox.setWindowTitle("NEXOS - Guardar Lista");
+        msgBox.setText("¿Desea guardar la lista de reproducción actual?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
 
-        if (reply == QMessageBox::Yes) {
-            savePlaylist();
+        // Personalizar el texto de los botones
+        QAbstractButton *yesButton = msgBox.button(QMessageBox::Yes);
+        yesButton->setText("Sí");
+
+        QAbstractButton *noButton = msgBox.button(QMessageBox::No);
+        noButton->setText("No");
+
+        msgBox.exec(); // Mostrar el cuadro de diálogo
+
+        if (msgBox.clickedButton() == yesButton) {
+            savePlaylist(); // Solo guarda si el usuario elige "Sí"
+        } else {
+            // Limpiar la lista si el usuario elige "No"
+            clearPlaylist(); // Llama a tu método para limpiar la lista
         }
     }
 
     // Llamar al método de la clase padre para manejar el cierre
-    QMainWindow::closeEvent(event);
+    event->accept(); // Aceptar el evento de cierre
 }
