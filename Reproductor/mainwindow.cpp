@@ -201,109 +201,108 @@ MainWindow::MainWindow(QWidget *parent) // Constructor de la clase MainWindow, r
     // Atajo para limpiar la lista
     QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);          // Se crea un atajo para limpiar la lista con Ctrl+L
     connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);  // Se conecta el atajo al método de limpiar lista
-    createFloatingLabel();
-    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
-    loadSavedPlaylist();
+    createFloatingLabel();   // Llama a la función createFloatingLabel() para crear una etiqueta flotante en la interfaz gráfica
+    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);  /*Modifica las banderas de la ventana para deshabilitar el botón de maximizar de la ventana, usando "windowFlags()"
+    para obtener las banderas actuales y eliminando el "Qt::WindowMaximizeButtonHint" */
+    loadSavedPlaylist();   // Llama a la función loadSavedPlaylist() para cargar una lista de reproducción guardada previamente.
 
 
-
-    setWindowTitle("N E X O S");
-    QSettings settings("Nexos Media", "NEXOS");
+    setWindowTitle("N E X O S");                  // Establece el título de la ventana de la aplicación como "N E X O S", que es el nombre del proyecto o la aplicación
+    QSettings settings("Nexos Media", "NEXOS");   // Crea un objeto QSettings para manejar la configuración de la aplicación. "Nexos Media" es el nombre de la organización y "NEXOS" es el nombre del programa, lo que permitirá guardar o cargar configuraciones específicas de la aplicación.
 
 }
 
+MainWindow::~MainWindow()        // Destructor de la clase MainWindow. Se ejecuta cuando se destruye el objeto de la ventana principal.
 
-
-
-
-MainWindow::~MainWindow()
 {
     // Guardar la lista antes de cerrar
-    savePlaylist();
+    savePlaylist();      // Llama al método savePlaylist() para guardar la lista de reproducción actual antes de cerrar la ventana.
 
     // Resto del código de limpieza existente
-    if (m_marqueeTimer) {
-        m_marqueeTimer->stop();
-        delete m_marqueeTimer;
+    if (m_marqueeTimer) {        // Si el temporizador de desplazamiento (marquee) existe...
+        m_marqueeTimer->stop();  // Detiene el temporizador.
+        delete m_marqueeTimer;   // Elimina el objeto temporizador de memoria.
     }
 
-    if (m_floatingLabel) {
-        delete m_floatingLabel;
+    if (m_floatingLabel) {        // Si el objeto de etiqueta flotante existe...
+        delete m_floatingLabel;   // Elimina el objeto de etiqueta flotante de memoria.
     }
-    if (m_labelAnimation) {
-        delete m_labelAnimation;
+    if (m_labelAnimation) {       // Si el objeto de animación de la etiqueta existe...
+        delete m_labelAnimation;  // Elimina el objeto de animación de memoria.
     }
-    delete ui;
+    delete ui;           / Elimina el objeto de interfaz de usuario generado por Qt Designer.
 }
 
-void MainWindow::onMediaError(QMediaPlayer::Error error)
+void MainWindow::onMediaError(QMediaPlayer::Error error)         // Método que maneja los errores de reproducción de medios.
 {
-    QString errorMessage;
+    QString errorMessage;     // Cadena para almacenar el mensaje de error.
 
-    switch (error) {
-    case QMediaPlayer::NoError:
-        return; // No hay error
-    case QMediaPlayer::ResourceError:
-        errorMessage = tr("Error de recurso: No se puede acceder al archivo.");
+    switch (error) {             // Compara el tipo de error recibido.
+    case QMediaPlayer::NoError:  // Si no hay error...
+        return; // No hay error  // No hacer nada, ya que no hay error.
+    case QMediaPlayer::ResourceError:    // Si el error es de recurso...
+        errorMessage = tr("Error de recurso: No se puede acceder al archivo.");  // Mensaje de error específico para error de recurso.
         break;
-    case QMediaPlayer::FormatError:
-        errorMessage = tr("Error de formato: El archivo no es compatible.");
+    case QMediaPlayer::FormatError:    // Si el error es de formato...
+        errorMessage = tr("Error de formato: El archivo no es compatible.");   // Mensaje de error específico para error de formato.
         break;
-    default:
-        errorMessage = tr("Error desconocido.");
+    default:                                       // Si el error no es uno de los anteriores...
+        errorMessage = tr("Error desconocido.");   // Mensaje de error general para cualquier otro tipo de error.
         break;
     }
 
-    QMessageBox::warning(this, tr("Error de Reproducción"), errorMessage);
+    QMessageBox::warning(this, tr("Error de Reproducción"), errorMessage);   // Muestra una ventana de advertencia con el mensaje de error.
 }
 
 
-void MainWindow::on_pushButton_Volume_clicked()
+void MainWindow::on_pushButton_Volume_clicked()                           // Método que se llama cuando se hace clic en el botón de volumen.
 {
-    IS_Muted = !IS_Muted; // Cambia el estado de silencio
-    audioOutput->setVolume(IS_Muted ? 0 : ui->horizontalSlider_Volume->value() / 100.0);
-    ui->pushButton_Volume->setIcon(IS_Muted ? QIcon(":/imagenes/mute.png") : QIcon(":/imagenes/sound.png"));
+    IS_Muted = !IS_Muted; // Cambia el estado de silencio                 // Cambia el estado de silencio (si está silenciado, lo activa, y viceversa).
+    audioOutput->setVolume(IS_Muted ? 0 : ui->horizontalSlider_Volume->value() / 100.0);    // Si está silenciado, pone el volumen a 0, de lo contrario, ajusta el volumen según el valor del deslizador.
+    ui->pushButton_Volume->setIcon(IS_Muted ? QIcon(":/imagenes/mute.png") : QIcon(":/imagenes/sound.png"));   // Cambia el icono del botón de volumen entre "mute" y "sound" dependiendo del estado de silencio.
 }
 
 // Método que actualiza la duración máxima del video en el deslizador de progreso
-void MainWindow::durationChanged(qint64 duration)
+void MainWindow::durationChanged(qint64 duration)          // Método que se llama cuando cambia la duración del video.
 {
-    mDuration = duration / 1000;
-    ui->horizontalSlider_Duration->setMaximum(mDuration);
+    mDuration = duration / 1000;                           // Convierte la duración a segundos (divide entre 1000).
+    ui->horizontalSlider_Duration->setMaximum(mDuration);  // Establece la duración máxima del deslizador de progreso al valor calculado.
+
 }
 
 // Método que actualiza la posición del video en el deslizador de progreso
-void MainWindow::positionChanged(qint64 duration)
+void MainWindow::positionChanged(qint64 duration)             // Método que se llama cuando cambia la posición actual del video.
 {
     // Solo actualizar el slider si no está siendo arrastrado
-    if (!ui->horizontalSlider_Duration->isSliderDown())
+    if (!ui->horizontalSlider_Duration->isSliderDown())     // Si el deslizador no está siendo arrastrado...
+    
     {
-        ui->horizontalSlider_Duration->blockSignals(true);  // Bloquear señales temporalmente
-        ui->horizontalSlider_Duration->setValue(duration / 1000);
-        ui->horizontalSlider_Duration->blockSignals(false); // Desbloquear señales
+        ui->horizontalSlider_Duration->blockSignals(true);         // Bloquea temporalmente las señales del deslizador para evitar cambios no deseados.
+        ui->horizontalSlider_Duration->setValue(duration / 1000);  // Establece el valor del deslizador con la posición actual del video en segundos.
+        ui->horizontalSlider_Duration->blockSignals(false);        // Desbloquea las señales del deslizador.
     }
 
     // Actualizar las etiquetas de tiempo solo cada segundo completo
-    static qint64 lastSecond = -1;
-    qint64 currentSecond = duration / 1000;
-    if (currentSecond != lastSecond)
+    static qint64 lastSecond = -1;              // Variable estática para almacenar el segundo anterior (inicialmente -1).
+    qint64 currentSecond = duration / 1000;     // Convierte la duración actual a segundos.
+    if (currentSecond != lastSecond)            // Si el segundo actual es diferente al último segundo registrado...
     {
-        updateDuration(currentSecond);
-        lastSecond = currentSecond;
+        updateDuration(currentSecond);  // Actualiza las etiquetas de tiempo con el nuevo segundo.
+        lastSecond = currentSecond;     // Actualiza el último segundo registrado con el segundo actual.
     }
 }
 
 // Actualización del tiempo actual y total del video
-void MainWindow::updateDuration(qint64 Duration)
+void MainWindow::updateDuration(qint64 Duration)    // Método que actualiza las etiquetas de tiempo (actual y total) del video.
 {
-    if (Duration || mDuration)
+    if (Duration || mDuration)      // Si la duración actual o la duración total son válidas...
     {
-        QTime CurrentTime((Duration / 3600) % 60, (Duration / 60) % 60, Duration % 60);
-        QTime TotalTime((mDuration / 3600) % 60, (mDuration / 60) % 60, mDuration % 60);
-        QString Format = mDuration > 3600 ? "hh:mm:ss" : "mm:ss";
+        QTime CurrentTime((Duration / 3600) % 60, (Duration / 60) % 60, Duration % 60);    // Convierte la duración actual a formato de tiempo (hh:mm:ss o mm:ss).
+        QTime TotalTime((mDuration / 3600) % 60, (mDuration / 60) % 60, mDuration % 60);   // Convierte la duración total a formato de tiempo (hh:mm:ss o mm:ss).
+        QString Format = mDuration > 3600 ? "hh:mm:ss" : "mm:ss";                          // Establece el formato de hora según si la duración total es mayor a una hora.
 
-        ui->label_current_Time->setText(CurrentTime.toString(Format));
-        ui->label_Total_Time->setText(TotalTime.toString(Format));
+        ui->label_current_Time->setText(CurrentTime.toString(Format));   // Actualiza la etiqueta de tiempo actual con el formato adecuado.
+        ui->label_Total_Time->setText(TotalTime.toString(Format));       // Actualiza la etiqueta de tiempo total con el formato adecuado.
     }
 }
 
