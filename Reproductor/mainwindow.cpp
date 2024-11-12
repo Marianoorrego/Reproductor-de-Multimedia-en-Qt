@@ -1,107 +1,108 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "mainwindow.h" // Incluye el archivo de encabezado que define la clase MainWindow
+#include "ui_mainwindow.h" // Incluye la interfaz de usuario generada por Qt Designer para la ventana principal
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    , Player(nullptr)
-    , BackgroundPlayer(nullptr)
-    , Video(nullptr)
-    , BackgroundVideo(nullptr)
-    , audioOutput(nullptr)
-    , IS_Pause(false)
-    , IS_Muted(false)
-    , mDuration(0)
-    , fileList(nullptr)
-    , currentNumber(0)
-    , currentIndex(-1)
-    , m_floatingLabel(nullptr)
-    , m_marqueeTimer(nullptr)
-    , m_scrollPosition(0)
+
+MainWindow::MainWindow(QWidget *parent) // Constructor de la clase MainWindow, recibe un parámetro 'parent' que es el widget padre
+    : QMainWindow(parent)               // Llama al constructor de la clase base QMainWindow, pasando el parámetro 'parent'
+    , ui(new Ui::MainWindow)           // Crea una nueva instancia de la interfaz de usuario para la ventana principal
+    , Player(nullptr)                  // Inicializa el puntero 'Player' a nullptr, este será el reproductor de medios
+    , BackgroundPlayer(nullptr)       // Inicializa el puntero 'BackgroundPlayer' a nullptr, relacionado con el video en segundo plano
+    , Video(nullptr)                  // Inicializa el puntero 'Video' a nullptr, este será el video principal
+    , BackgroundVideo(nullptr)       // Inicializa el puntero 'BackgroundVideo' a nullptr, este será el video en segundo plano
+    , audioOutput(nullptr)           // Inicializa el puntero 'audioOutput' a nullptr, este manejará la salida de audio
+    , IS_Pause(false)                // Inicializa el estado de pausa como falso
+    , IS_Muted(false)                // Inicializa el estado de mute como falso
+    , mDuration(0)                   // Inicializa la duración del video como 0
+    , fileList(nullptr)              // Inicializa el puntero 'fileList' a nullptr, que será la lista de archivos multimedia
+    , currentNumber(0)               // Inicializa el número actual de archivo como 0
+    , currentIndex(-1)               // Inicializa el índice actual como -1, lo que indica que no se ha seleccionado ningún archivo
+    , m_floatingLabel(nullptr)       // Inicializa el puntero 'm_floatingLabel' a nullptr, que se puede usar para mostrar etiquetas flotantes
+    , m_marqueeTimer(nullptr)        // Inicializa el puntero 'm_marqueeTimer' a nullptr, que se puede usar para temporizadores
+    , m_scrollPosition(0)            // Inicializa la posición de desplazamiento a 0
 {
-    qApp->setStyle("Fusion");  // Mantener Fusion
+    qApp->setStyle("Fusion");  // Mantener Fusion, Establece el estilo de la aplicación como 'Fusion', que es un estilo de interfaz predefinido en Qt
 
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor(20, 20, 20));           // Más oscuro
-    darkPalette.setColor(QPalette::WindowText, QColor(220, 220, 220));    // Texto gris claro
-    darkPalette.setColor(QPalette::Base, QColor(15, 15, 15));             // Base aún más oscura
-    darkPalette.setColor(QPalette::AlternateBase, QColor(25, 25, 25));    // Fondo alternativo
-    darkPalette.setColor(QPalette::ToolTipBase, QColor(30, 30, 30));      // Tooltips oscuros
-    darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-    darkPalette.setColor(QPalette::Text, QColor(220, 220, 220));          // Texto gris claro
-    darkPalette.setColor(QPalette::Button, QColor(25, 25, 25));           // Botones muy oscuros
-    darkPalette.setColor(QPalette::ButtonText, Qt::white);
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, QColor(50, 100, 200));           // Azul más suave
-    darkPalette.setColor(QPalette::Highlight, QColor(50, 100, 200));      // Color de selección
-    darkPalette.setColor(QPalette::HighlightedText, Qt::white);
+    QPalette darkPalette; // Crea un objeto QPalette para configurar los colores de la interfaz
+    darkPalette.setColor(QPalette::Window, QColor(20, 20, 20));           // Establece el color de fondo de la ventana como un gris oscuro
+    darkPalette.setColor(QPalette::WindowText, QColor(220, 220, 220));    // Establece el color del texto de la ventana como gris claro
+    darkPalette.setColor(QPalette::Base, QColor(15, 15, 15));             // Establece el color de fondo base como un gris más oscuro
+    darkPalette.setColor(QPalette::AlternateBase, QColor(25, 25, 25));    // Establece el color de fondo alternativo
+    darkPalette.setColor(QPalette::ToolTipBase, QColor(30, 30, 30));      // Establece el color de fondo de las tooltips como un gris oscuro
+    darkPalette.setColor(QPalette::ToolTipText, Qt::white);               // Establece el color del texto de las tooltips como blanco
+    darkPalette.setColor(QPalette::Text, QColor(220, 220, 220));          // Establece el color del texto en general como gris claro
+    darkPalette.setColor(QPalette::Button, QColor(25, 25, 25));           // Establece el color de fondo de los botones como gris muy oscuro
+    darkPalette.setColor(QPalette::ButtonText, Qt::white);                // Establece el color del texto de los botones como blanco
+    darkPalette.setColor(QPalette::BrightText, Qt::red);                  // Establece el color del texto brillante como rojo
+    darkPalette.setColor(QPalette::Link, QColor(50, 100, 200));           // Establece el color de los enlaces como un azul suave
+    darkPalette.setColor(QPalette::Highlight, QColor(50, 100, 200));      // Establece el color de selección como azul suave
+    darkPalette.setColor(QPalette::HighlightedText, Qt::white);           // Establece el color del texto destacado como blanco
 
-    qApp->setPalette(darkPalette);
+    qApp->setPalette(darkPalette);     /// Aplica la paleta de colores a la aplicación
 
     qApp->setStyleSheet(R"(
     * {
-        background-color: #141414;  /* Aún más oscuro */
-        color: #DDDDDD;             /* Texto gris claro */
+        background-color: #141414;  // Aún más oscuro 
+        color: #DDDDDD;             // Texto gris claro 
     }
     QListWidget {
-        background-color: #0F0F0F;  /* Negro profundo */
-        border: 1px solid #333333;
+        background-color: #0F0F0F;  // Negro profundo 
+        border: 1px solid #333333;  //Borde gris oscuro 
     }
     QLineEdit, QTextEdit {
-        background-color: #0A0A0A;  /* Negro más profundo */
-        color: #DDDDDD;
-        border: 1px solid #333333;
+        background-color: #0A0A0A;  //  Negro más profundo 
+        color: #DDDDDD;             //Texto gris claro 
+        border: 1px solid #333333;  //Borde gris oscuro
     }
     QPushButton {
-        background-color: #1E1E1E;  /* Gris muy oscuro */
-        color: #DDDDDD;
-        border: 1px solid #333333;
-        padding: 5px;
-        border-radius: 3px;
+        background-color: #1E1E1E; //  Gris muy oscuro 
+        color: #DDDDDD;            // Texto gris claro
+        border: 1px solid #333333; // Borde gris oscuro
+        padding: 5px;              // Espaciado alrededor del texto 
+        border-radius: 3px;        // Bordes redondeados 
     }
     QPushButton:hover {
-        background-color: #262626;  /* Ligero cambio al pasar el mouse */
+        background-color: #262626;  // Color más claro cuando el mouse pasa sobre el botón 
     }
     QPushButton:pressed {
-        background-color: #111111;  /* Aún más oscuro al presionar */
+        background-color: #111111;  //  Color más oscuro cuando el botón es presionado
     }
     QSlider::handle:horizontal {
-        background: #3A6EA5;  /* Azul más oscuro */
+        background: #3A6EA5;       //  Azul más oscuro para el control deslizante
         width: 18px;
         margin: -5px 0;
-        border-radius: 9px;
+        border-radius: 9px;       //  Bordes redondeados para el control deslizante
     }
     QSlider::groove:horizontal {
-        background: #2A2A2A;
-        height: 8px;
+        background: #2A2A2A;     // Fondo gris oscuro para la pista del control deslizante
+        height: 8px;             // Altura del control deslizante 
     }
     QMenuBar, QMenu {
-        background-color: #141414;
-        color: #DDDDDD;
+        background-color: #141414; // Fondo oscuro para la barra de menús
+        color: #DDDDDD;            // Texto gris claro en los menús
     }
     QMenu::item:selected {
-        background-color: #2A2A2A;
+        background-color: #2A2A2A;  // Color de fondo para los ítems seleccionados en el menú
     }
-)");
-    ui->setupUi(this);
+)");                              // Estilos personalizados aplicados
+    ui->setupUi(this);            // Configura la interfaz de usuario para la ventana principal
     resize(1100, 630);
 
     // Inicialización del reproductor de medios y configuración de salida de audio
-    Player = new QMediaPlayer(this);
-    audioOutput = new QAudioOutput(this);
-    Player->setAudioOutput(audioOutput);
+    Player = new QMediaPlayer(this);           // Crea un nuevo reproductor de medios
+    audioOutput = new QAudioOutput(this);      // Crea un nuevo objeto de salida de audio
+    Player->setAudioOutput(audioOutput);       // Asocia la salida de audio al reproductor
 
     // Inicializar el QVideoWidget una vez
-    BackgroundVideo = new QVideoWidget(this);
-    initializeVideoWidget();
+    BackgroundVideo = new QVideoWidget(this);  // Crea un nuevo widget de video para el fondo
+    initializeVideoWidget();                   // Llama a una función para inicializar el widget de video
 
     // Creación del panel lateral (Dock) para la lista de archivos multimedia
-    QDockWidget *dock = new QDockWidget(tr("Lista de archivos"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    QDockWidget *dock = new QDockWidget(tr("Lista de archivos"), this);        // Crea un widget de panel lateral para la lista de archivos
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);   // Permite que el panel se coloque a la izquierda o a la derecha
 
     // Widget contenedor para la lista y el botón
-    QWidget *dockContents = new QWidget();
-    QVBoxLayout *dockLayout = new QVBoxLayout(dockContents);
+    QWidget *dockContents = new QWidget();                       // Crea un nuevo widget para el contenido del panel lateral
+    QVBoxLayout *dockLayout = new QVBoxLayout(dockContents);     // Crea un diseño vertical para el contenido del panel
 
     // Lista de archivos
     fileList = new QListWidget();
