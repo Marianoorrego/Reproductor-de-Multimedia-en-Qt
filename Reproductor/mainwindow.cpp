@@ -105,101 +105,102 @@ MainWindow::MainWindow(QWidget *parent) // Constructor de la clase MainWindow, r
     QVBoxLayout *dockLayout = new QVBoxLayout(dockContents);     // Crea un diseño vertical para el contenido del panel
 
     // Lista de archivos
-    fileList = new QListWidget();
-    fileList->setDragEnabled(true); // Permitir arrastrar
-    fileList->setDropIndicatorShown(true); // Mostrar el indicador de caída
-    fileList->setAcceptDrops(true); // Aceptar caídas
-
+    fileList = new QListWidget();           // Crea un widget de lista para mostrar los archivos multimedia
+    fileList->setDragEnabled(true);        // Habilita el arrastre de archivos en la lista
+    fileList->setDropIndicatorShown(true); // Muestra un indicador de caída cuando se arrastran archivos
+    fileList->setAcceptDrops(true);        // Permite que se acepten archivos arrastrados a la lista
+    
     // Botón para añadir archivos
-    QPushButton *addFileButton = new QPushButton("Añadir archivo");
-    connect(addFileButton, &QPushButton::clicked, this, &MainWindow::addFile);
+    QPushButton *addFileButton = new QPushButton("Añadir archivo");              // Se crea un botón con el texto "Añadir archivo"
+    connect(addFileButton, &QPushButton::clicked, this, &MainWindow::addFile);   // Se conecta el evento de hacer clic en el botón a la función "addFile" para manejar la acción
+
 
     // Añadir widgets al layout
-    dockLayout->addWidget(fileList);
-    dockLayout->addWidget(addFileButton);
+    dockLayout->addWidget(fileList);        // Se agrega el widget de la lista de archivos (fileList) al layout del dock
+    dockLayout->addWidget(addFileButton);   // Se agrega el botón de añadir archivo (addFileButton) al layout del dock
+
 
     // Conectar selección de archivo a la reproducción correspondiente
-    connect(fileList, &QListWidget::itemClicked, this, &MainWindow::onFileSelected);
+    connect(fileList, &QListWidget::itemClicked, this, &MainWindow::onFileSelected); // Se conecta el evento de clic en un archivo de la lista a la función "onFileSelected" que maneja la selección y reproducción
 
     // Configurar el widget del dock
-    dock->setWidget(dockContents);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    dock->setWidget(dockContents);                 // Se establece el contenido del dock (dockContents) como el widget principal que se mostrará
+    addDockWidget(Qt::LeftDockWidgetArea, dock);   // Se agrega el dock a la ventana en el área izquierda
 
     // Inicialización del reproductor y widget de video de fondo
-    BackgroundPlayer = new QMediaPlayer(this);
-    BackgroundVideo = new QVideoWidget(ui->groupBox_Video);
-    BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-    BackgroundPlayer->setVideoOutput(BackgroundVideo);
-    BackgroundVideo->setVisible(false);
+    BackgroundPlayer = new QMediaPlayer(this);             // Se crea un nuevo reproductor de medios para el video de fondo
+    BackgroundVideo = new QVideoWidget(ui->groupBox_Video); // Se crea un widget de video para mostrar el fondo en el área de "groupBox_Video"
+    BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);  // Se establece el tamaño y posición del widget dentro del grupo
+    BackgroundPlayer->setVideoOutput(BackgroundVideo);   // Se asigna el widget de video como la salida del reproductor de medios de fondo
+    BackgroundVideo->setVisible(false);                  // Se oculta el widget de video de fondo inicialmente
 
     // Configuración para reproducción en bucle del video de fondo
-    connect(BackgroundPlayer, &QMediaPlayer::mediaStatusChanged, this, [=](QMediaPlayer::MediaStatus status) {
-        if (status == QMediaPlayer::EndOfMedia) {
-            BackgroundPlayer->play();
+    connect(BackgroundPlayer, &QMediaPlayer::mediaStatusChanged, this, [=](QMediaPlayer::MediaStatus status) {     // Se conecta el cambio de estado del reproductor de medios a una función lambda
+        if (status == QMediaPlayer::EndOfMedia) {     // Si el video llega al final
+            BackgroundPlayer->play();                 // Se inicia nuevamente la reproducción del video para que se repita en bucle
         }
     });
 
     // Asignación de iconos a los botones del reproductor
-    ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
-    ui->pushButton_Stop->setIcon(QIcon(":/imagenes/stop.png"));
-    ui->pushButton_Seek_Backward->setIcon(QIcon(":/imagenes/retroceder.png"));
-    ui->pushButton_Seek_Forward->setIcon(QIcon(":/imagenes/avanzar.png"));
-    ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));
-    ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png"));
-    ui->pushButton_Previous->setIcon(QIcon(":/imagenes/prev.png"));
+    ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));            // Se asigna el icono de "play" al botón de reproducción/pausa
+    ui->pushButton_Stop->setIcon(QIcon(":/imagenes/stop.png"));                  // Se asigna el icono de "stop" al botón de detener
+    ui->pushButton_Seek_Backward->setIcon(QIcon(":/imagenes/retroceder.png"));   // Se asigna el icono de "retroceder" al botón de retroceso
+    ui->pushButton_Seek_Forward->setIcon(QIcon(":/imagenes/avanzar.png"));       // Se asigna el icono de "avanzar" al botón de avance
+    ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));               // Se asigna el icono de "sound" al botón de volumen
+    ui->pushButton_Next->setIcon(QIcon(":/imagenes/next.png"));                  // Se asigna el icono de "next" al botón de siguiente
+    ui->pushButton_Previous->setIcon(QIcon(":/imagenes/prev.png"));             // Se asigna el icono de "prev" al botón de anterior
 
     // Configuración inicial de volumen
-    ui->horizontalSlider_Volume->setMinimum(0);
-    ui->horizontalSlider_Volume->setMaximum(100);
-    ui->horizontalSlider_Volume->setValue(30);
-    audioOutput->setVolume(ui->horizontalSlider_Volume->value() / 100.0);
+    ui->horizontalSlider_Volume->setMinimum(0);                             // Se establece el valor mínimo del control deslizante de volumen en 0
+    ui->horizontalSlider_Volume->setMaximum(100);                           // Se establece el valor máximo del control deslizante de volumen en 100
+    ui->horizontalSlider_Volume->setValue(30);                              // Se establece el valor inicial del control deslizante de volumen en 30
+    audioOutput->setVolume(ui->horizontalSlider_Volume->value() / 100.0);   // Se ajusta el volumen del reproductor de medios en función del valor del control deslizante
 
     // Conexión de las señales del reproductor
-    connect(Player, &QMediaPlayer::durationChanged, this, &MainWindow::durationChanged);
-    connect(Player, &QMediaPlayer::positionChanged, this, &MainWindow::positionChanged);
-    connect(Player, &QMediaPlayer::errorOccurred, this, &MainWindow::onMediaError);
-    connect(Player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onMediaStatusChanged);
+    connect(Player, &QMediaPlayer::durationChanged, this, &MainWindow::durationChanged);         // Conecta el cambio de duración del archivo al método "durationChanged"
+    connect(Player, &QMediaPlayer::positionChanged, this, &MainWindow::positionChanged);         // Conecta el cambio de posición del archivo al método "positionChanged"
+    connect(Player, &QMediaPlayer::errorOccurred, this, &MainWindow::onMediaError);              // Conecta los errores del reproductor al método "onMediaError"
+    connect(Player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::onMediaStatusChanged); // Conecta el cambio de estado del reproductor al método "onMediaStatusChanged"
 
     // Atajos de teclado
-    QShortcut *playPauseShortcut = new QShortcut(QKeySequence("Space"), this);
-    connect(playPauseShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Play_Pause_clicked);
+    QShortcut *playPauseShortcut = new QShortcut(QKeySequence("Space"), this);                                 // Se crea un atajo de teclado para reproducir/pausar con la barra espaciadora
+    connect(playPauseShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Play_Pause_clicked);    // Se conecta la activación del atajo al método de clic del botón de reproducción/pausa
 
-    QShortcut *stopShortcut = new QShortcut(QKeySequence("Ctrl+S"), this);
-    connect(stopShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Stop_clicked);
+    QShortcut *stopShortcut = new QShortcut(QKeySequence("Ctrl+S"), this);                              // Se crea un atajo de teclado para detener con Ctrl+S
+    connect(stopShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Stop_clicked);       // Se conecta la activación del atajo al método de clic del botón de detener
 
-    QShortcut *muteShortcut = new QShortcut(QKeySequence("M"), this);
-    connect(muteShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Volume_clicked);
+    QShortcut *muteShortcut = new QShortcut(QKeySequence("M"), this);                                 // Se crea un atajo de teclado para silenciar con la tecla "M"
+    connect(muteShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Volume_clicked);    // Se conecta la activación del atajo al método de clic del botón de volumen
 
-    QShortcut *seekForwardShortcut = new QShortcut(QKeySequence("Right"), this);
-    connect(seekForwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Forward_clicked);
+    QShortcut *seekForwardShortcut = new QShortcut(QKeySequence("Right"), this);                                 // Se crea un atajo de teclado para avanzar con la tecla de flecha derecha
+    connect(seekForwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Forward_clicked);  // Se conecta la activación del atajo al método de clic del botón de avance
 
-    QShortcut *seekBackwardShortcut = new QShortcut(QKeySequence("Left"), this);
-    connect(seekBackwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Backward_clicked);
+    QShortcut *seekBackwardShortcut = new QShortcut(QKeySequence("Left"), this);                                    // Se crea un atajo de teclado para retroceder con la tecla de flecha izquierda
+    connect(seekBackwardShortcut, &QShortcut::activated, this, &MainWindow::on_pushButton_Seek_Backward_clicked);   // Se conecta la activación del atajo al método de clic del botón de retroceso
 
-    QShortcut *increaseVolumeShortcut = new QShortcut(QKeySequence("Up"), this);
-    connect(increaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::increaseVolume);
+    QShortcut *increaseVolumeShortcut = new QShortcut(QKeySequence("Up"), this);                 // Se crea un atajo de teclado para aumentar el volumen con la tecla de flecha hacia arriba
+    connect(increaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::increaseVolume);   // Se conecta la activación del atajo al método de aumento de volumen
 
-    QShortcut *decreaseVolumeShortcut = new QShortcut(QKeySequence("Down"), this);
-    connect(decreaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::decreaseVolume);
+    QShortcut *decreaseVolumeShortcut = new QShortcut(QKeySequence("Down"), this);               // Se crea un atajo de teclado para disminuir el volumen con la tecla de flecha hacia abajo
+    connect(decreaseVolumeShortcut, &QShortcut::activated, this, &MainWindow::decreaseVolume);    // Se conecta la activación del atajo al método de disminución de volumen
 
     // Desactivar características de desacople
-    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);    // Se desactivan las características del dock para que no sea acoplable o despegable
 
-
-
-    connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);
-    connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);
+    connect(ui->pushButton_Next, &QPushButton::clicked, this, &MainWindow::on_pushButton_Next_clicked);           // Se conecta el clic en el botón de siguiente al método "on_pushButton_Next_clicked"
+    connect(ui->pushButton_Previous, &QPushButton::clicked, this, &MainWindow::on_pushButton_Previous_clicked);   // Se conecta el clic en el botón de anterior al método "on_pushButton_Previous_clicked"
 
     // Establecer el video de fondo directamente
-    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
+    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));    // Se establece la fuente del video de fondo (en este caso, un archivo MP4 en los recursos)
 
-    QPushButton *clearPlaylistButton = new QPushButton("Limpiar Lista", dockContents);
-    dockLayout->addWidget(clearPlaylistButton);
-    connect(clearPlaylistButton, &QPushButton::clicked, this, &MainWindow::clearPlaylist);
+    // Botón para limpiar la lista de archivos
+    QPushButton *clearPlaylistButton = new QPushButton("Limpiar Lista", dockContents);      // Se crea un botón para limpiar la lista de archivos
+    dockLayout->addWidget(clearPlaylistButton);                                             // Se agrega el botón de limpiar lista al layout del dock
+    connect(clearPlaylistButton, &QPushButton::clicked, this, &MainWindow::clearPlaylist);  // Se conecta el clic en el botón a la función "clearPlaylist" para limpiar la lista
 
     // Atajo para limpiar la lista
-    QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);
-    connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);
+    QShortcut *clearPlaylistShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);          // Se crea un atajo para limpiar la lista con Ctrl+L
+    connect(clearPlaylistShortcut, &QShortcut::activated, this, &MainWindow::clearPlaylist);  // Se conecta el atajo al método de limpiar lista
     createFloatingLabel();
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     loadSavedPlaylist();
