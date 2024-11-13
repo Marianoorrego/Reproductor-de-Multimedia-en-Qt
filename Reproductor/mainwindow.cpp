@@ -785,31 +785,31 @@ void MainWindow::on_pushButton_Next_clicked()
 {
 
     if (playlist.isEmpty()) {
-        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
-        return;
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");    // Si la lista de reproducción está vacía, mostrar un mensaje de advertencia
+        return;           // Salir de la función si no hay archivos
     }
 
-    // Incrementar el número actual
+      // Incrementar el número actual para pasar al siguiente archivo
     currentNumber++;
 
-    // Si supera el número máximo, volver al primero
+   // Si el número actual supera el número de archivos en la lista, volver al primero
     if (currentNumber > fileList->count()) {
         currentNumber = 1;
     }
 
     // Encontrar el archivo correspondiente al número actual
-    QString searchName = QString("%1.").arg(currentNumber);
+    QString searchName = QString("%1.").arg(currentNumber);         // Crear una cadena de texto que busque el archivo correspondiente al número actual
 
-    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
-        if (it.key().startsWith(searchName)) {
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {    // Recorrer el mapa de archivos para encontrar el archivo correspondiente
+        if (it.key().startsWith(searchName)) {                      // Si la clave comienza con el número actual, significa que es el archivo correcto
             // Encontrar el ítem correspondiente en la lista
-            QString fileName = it.key().split(". ").last();
-            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);
+            QString fileName = it.key().split(". ").last();        // Obtener el nombre del archivo sin el número
+            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);         // Buscar el ítem en la lista de archivos que coincida con el nombre del archivo
 
-            if (!items.isEmpty()) {
-                fileList->setCurrentItem(items.first());
-                playFile(it.value());
-                break;
+            if (!items.isEmpty()) {                            // Si se encontró el ítem en la lista
+                fileList->setCurrentItem(items.first());       // Establecer el ítem como el seleccionado en la lista
+                playFile(it.value());                          // Reproducir el archivo correspondiente
+                break;                                         // Salir del bucle después de reproducir el archivo
             }
         }
     }
@@ -818,62 +818,62 @@ void MainWindow::on_pushButton_Next_clicked()
 void MainWindow::on_pushButton_Previous_clicked()
 {
     if (playlist.isEmpty()) {
-        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");
-        return;
+        QMessageBox::information(this, "Información", "Primero añada archivos a la lista");     // Si la lista de reproducción está vacía, mostrar un mensaje de advertencia
+        return;        // Salir de la función si no hay archivos
     }
 
     // Decrementar el número actual
     currentNumber--;
 
-    // Si es menor que 1, ir al último
+      // Si el número actual es menor que 1, ir al último archivo de la lista
     if (currentNumber < 1) {
         currentNumber = fileList->count();
     }
 
     // Encontrar el archivo correspondiente al número actual
-    QString searchName = QString("%1.").arg(currentNumber);
+    QString searchName = QString("%1.").arg(currentNumber);     // Crear una cadena de texto que busque el archivo correspondiente al número actual
 
-    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
-        if (it.key().startsWith(searchName)) {
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {       // Recorrer el mapa de archivos para encontrar el archivo correspondiente
+        if (it.key().startsWith(searchName)) {                         // Si la clave comienza con el número actual, significa que es el archivo correcto
             // Encontrar el ítem correspondiente en la lista
-            QString fileName = it.key().split(". ").last();
-            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);
+            QString fileName = it.key().split(". ").last();           // Obtener el nombre del archivo sin el número
+            QList<QListWidgetItem*> items = fileList->findItems(fileName, Qt::MatchExactly);       // Buscar el ítem en la lista de archivos que coincida con el nombre del archivo
 
-            if (!items.isEmpty()) {
-                fileList->setCurrentItem(items.first());
-                playFile(it.value());
-                break;
+            if (!items.isEmpty()) {                            // Si se encontró el ítem en la lista
+                fileList->setCurrentItem(items.first());       // Establecer el ítem como el seleccionado en la lista
+                playFile(it.value());                          // Reproducir el archivo correspondiente
+                break;                                         // Salir del bucle después de reproducir el archivo
             }
         }
     }
 }
 void MainWindow::savePlaylist()
 {
-    QSettings settings("Nexos Media", "NEXOS");
+    QSettings settings("Nexos Media", "NEXOS");       // Crear un objeto QSettings para guardar la configuración
 
     // Guardar número de archivos
-    settings.setValue("playlistCount", playlist.size());
+    settings.setValue("playlistCount", playlist.size());     // Guardar el número de archivos en la lista de reproducción
 
-    // Guardar cada ruta de archivo
-    for (int i = 0; i < playlist.size(); ++i) {
+    // Guardar cada ruta de archivo en la lista de reproducción
+    for (int i = 0; i < playlist.size(); ++i) {             
         settings.setValue(QString("playlist_file_%1").arg(i), playlist[i]);
     }
 }
 
 void MainWindow::loadSavedPlaylist()
 {
-    QSettings settings("Nexos Media", "NEXOS");
+    QSettings settings("Nexos Media", "NEXOS");     // Crear un objeto QSettings para cargar la configuración guardada
 
     // Obtener número de archivos
-    int count = settings.value("playlistCount", 0).toInt();
+    int count = settings.value("playlistCount", 0).toInt();      // Obtener el número de archivos guardados en la lista de reproducción
 
-    // Cargar cada archivo
+   // Cargar cada archivo guardado en la lista
     for (int i = 0; i < count; ++i) {
         QString filePath = settings.value(QString("playlist_file_%1").arg(i)).toString();
 
-        // Verificar si el archivo existe antes de agregarlo
-        if (QFileInfo::exists(filePath)) {
-            addFileToPlaylist(filePath);
+       
+        if (QFileInfo::exists(filePath)) {    // Verificar si el archivo existe antes de agregarlo
+            addFileToPlaylist(filePath);      // Agregar el archivo a la lista de reproducción
         }
     }
 }
@@ -884,23 +884,23 @@ void MainWindow::addFileToPlaylist(const QString& filePath)
     // Verificar si el archivo ya está en la lista
     for (const QString& existingPath : playlist) {
         if (QFileInfo(existingPath) == fileInfo) {
-            return; // Ya existe, no agregar duplicados
+            return;   // Si ya existe, no agregarlo nuevamente
         }
     }
 
-    // Agregar a la lista
+    // Agregar el archivo a la lista de reproducción
     int nextNumber = fileList->count() + 1;
     QString internalKey = QString("%1. %2").arg(nextNumber).arg(fileInfo.fileName());
 
-    fileList->addItem(fileInfo.fileName());
-    fileMap[internalKey] = filePath;
-    playlist.append(filePath);
+    fileList->addItem(fileInfo.fileName());  // Agregar el nombre del archivo a la lista visible en la interfaz de usuario
+    fileMap[internalKey] = filePath;         // Asignar la ruta del archivo a la clave interna en el mapa
+    playlist.append(filePath);               // Agregar la ruta del archivo a la lista de reproducción
 }
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (!playlist.isEmpty()) {
-        // Crear un cuadro de diálogo de confirmación
-        QMessageBox msgBox(this);
+    if (!playlist.isEmpty()) {                // Si la lista de reproducción no está vacía
+        
+        QMessageBox msgBox(this);              // Crear un cuadro de diálogo de confirmación para guardar la lista
         msgBox.setWindowTitle("NEXOS - Guardar Lista");
         msgBox.setText("¿Desea guardar la lista de reproducción actual?");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -915,13 +915,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
         msgBox.exec(); // Mostrar el cuadro de diálogo
 
         if (msgBox.clickedButton() == yesButton) {
-            savePlaylist(); // Solo guarda si el usuario elige "Sí"
+            savePlaylist();  // Si el usuario hace clic en "Sí", guardar la lista de reproducción
         } else {
-            // Limpiar la lista si el usuario elige "No"
+          // Si el usuario hace clic en "No", limpiar la lista
             clearPlaylist(); // Llama a tu método para limpiar la lista
         }
     }
 
     // Llamar al método de la clase padre para manejar el cierre
-    event->accept(); // Aceptar el evento de cierre
+    event->accept(); // Aceptar el evento de cierre para que la aplicación se cierre
 }
