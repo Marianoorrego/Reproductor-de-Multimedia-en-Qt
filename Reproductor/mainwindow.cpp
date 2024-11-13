@@ -562,10 +562,10 @@ void MainWindow::playFile(const QString& filePath)   // Este método reproduce u
 }
 
 QString MainWindow::findBackgroundVideo() {
-    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
+    BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));   // Establece el origen del archivo de video de fondo en el reproductor
 }
 
-void MainWindow::clearPlaylist() {
+void MainWindow::clearPlaylist() {    // Si la lista de reproducción está vacía, mostrar mensaje y salir
     if (playlist.isEmpty()) {
         QMessageBox::information(this, "Información", "No hay archivos que limpiar");
         return;
@@ -573,112 +573,116 @@ void MainWindow::clearPlaylist() {
 
     // Crear un cuadro de diálogo de confirmación
     QMessageBox msgBox(this);
-    msgBox.setWindowTitle("Limpiar Lista");
-    msgBox.setText("¿Está seguro que desea limpiar la lista de reproducción?");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setWindowTitle("Limpiar Lista");   // Título de la ventana
+    msgBox.setText("¿Está seguro que desea limpiar la lista de reproducción?");    // Texto de confirmación
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);         // Botones de Sí y No
 
     // Personalizar el texto de los botones
     QAbstractButton *yesButton = msgBox.button(QMessageBox::Yes);
-    yesButton->setText("Sí");
+    yesButton->setText("Sí");   // Cambiar texto del botón "Sí"
 
     QAbstractButton *noButton = msgBox.button(QMessageBox::No);
-    noButton->setText("No");
+    noButton->setText("No");    // Cambiar texto del botón "No"
 
-    msgBox.exec(); // Mostrar el cuadro de diálogo
+    msgBox.exec();    // Mostrar el cuadro de diálogo y esperar respuesta
 
+
+     // Si el usuario hace clic en "Sí"
     if (msgBox.clickedButton() == yesButton) {
         // Detener la reproducción
-        Player->stop();
+        Player->stop();   // Detener cualquier reproducción activa
         BackgroundPlayer->stop();
 
-        // Limpiar la lista
+        // Limpiar la lista de archivos, el mapa de archivos y la lista de reproducción
         fileList->clear();
         fileMap.clear();
         playlist.clear();
 
-        // Resetear índices y estado
+         // Resetear los índices y el estado de visualización
         currentIndex = -1;
         BackgroundVideo->setVisible(false);
 
-        // Resetear labels y slider
-        ui->label_current_Time->setText("00:00:00");
-        ui->label_Total_Time->setText("00:00:00");
-        ui->horizontalSlider_Duration->setValue(0);
+        // Resetear los valores de los labels y el slider
+        ui->label_current_Time->setText("00:00:00");   // Tiempo actual a 00:00:00
+        ui->label_Total_Time->setText("00:00:00");     // Tiempo total a 00:00:00
+        ui->horizontalSlider_Duration->setValue(0);    // Slider de duración a 0
     }
 }
-void MainWindow::createFloatingLabel()
-{
+void MainWindow::createFloatingLabel()    // Crear un QLabel que funcionará como un label flotante
+{ 
     // Crear el label flotante
     m_floatingLabel = new QLabel(this);
     m_floatingLabel->setStyleSheet(
         "QLabel {"
         "   background-color: transparent;" // Fondo completamente transparente
-        "   color: white;"
-        "   padding: 10px;"
-        "   border-radius: 10px;"
-        "   font-size: 16px;"
+        "   color: white;"                  // Texto blanco
+        "   padding: 10px;"                 // Espaciado interno
+        "   border-radius: 10px;"           // Bordes redondeados
+        "   font-size: 16px;"               // Tamaño de fuente
         "}"
         );
-    m_floatingLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    m_floatingLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);       // Alineación del texto
     m_floatingLabel->setAttribute(Qt::WA_TranslucentBackground); // Hacer el fondo completamente transparente
-    m_floatingLabel->hide();
+    m_floatingLabel->hide();      // Ocultar el label inicialmente
 
-    // Crear timer para el efecto marquee
-    m_marqueeTimer = new QTimer(this);
-    connect(m_marqueeTimer, &QTimer::timeout, this, &MainWindow::updateMarqueeText);
+   // Crear un timer para el efecto de desplazamiento del texto
+    m_marqueeTimer = new QTimer(this);  se crea un objeto QTimer llamado m_marqueeTimer
+    connect(m_marqueeTimer, &QTimer::timeout, this, &MainWindow::updateMarqueeText);  // Conectar el timer a la función de actualización del texto
 }
-void MainWindow::updateFloatingLabel(const QString& fullKey)
+void MainWindow::updateFloatingLabel(const QString& fullKey)   
+  // Si el label flotante no existe, crearlo
 {
-    if (!m_floatingLabel) {
+    if (!m_floatingLabel) {    
         createFloatingLabel();
     }
-
-    // Coordenadas basadas en el diseño del UI
+  // Definir las dimensiones del label flotante
     int labelWidth = 350;  // Ancho especificado
     int labelHeight = 40;  // Altura
 
-    // Coordenadas exactas
-    int labelX = 500;  // X
-    int labelY = 580;  // Y
+    // Coordenadas para posicionar el label en el UI
+    int labelX = 500;  // Posición en el eje X
+    int labelY = 580;  // Posición en el eje Y
 
+      // Configurar las coordenadas y dimensiones del label
     m_floatingLabel->setGeometry(labelX, labelY, labelWidth, labelHeight);
+      // Aplicar el estilo al label flotante
     m_floatingLabel->setStyleSheet(
         "QLabel {"
-        "   background-color: rgba(0, 0, 0, 180);" // Fondo semi-transparente
-        "   color: white;"
-        "   padding: 5px;"
-        "   border-radius: 10px;"
-        "   font-size: 14px;"
+        "   background-color: rgba(0, 0, 0, 180);" // Fondo semi-transparente negro
+        "   color: white;"          // Texto blanco
+        "   padding: 5px;"          // Espaciado interno
+        "   border-radius: 10px;"   // Bordes redondeados
+        "   font-size: 14px;"        // Tamaño de fuente
         "}"
         );
-    m_floatingLabel->setAlignment(Qt::AlignCenter);
-    m_floatingLabel->show();
+    m_floatingLabel->setAlignment(Qt::AlignCenter);  // Alineación centrada del texto
+    m_floatingLabel->show();      // Mostrar el label
 
     // Extraer solo el nombre del archivo del fullKey
-    m_currentFileName = fullKey.split(". ").last();
-    m_scrollPosition = 0;
+    m_currentFileName = fullKey.split(". ").last();   // Tomar la última parte después del punto
+    m_scrollPosition = 0;           // Resetear la posición de desplazamiento
 
-    // Iniciar el timer para el efecto marquee
-    m_marqueeTimer->start(100); // Actualizar cada 100 ms
+    // Iniciar el timer para el efecto de desplazamiento
+    m_marqueeTimer->start(100); // Actualizar cada 100 milisegundos
 }
 void MainWindow::updateMarqueeText()
 {
-    if (!m_floatingLabel || m_currentFileName.isEmpty()) return;
+    if (!m_floatingLabel || m_currentFileName.isEmpty()) return;  // Si no existe el label flotante o el nombre del archivo está vacío, no hacer nada
 
-    // Preparar el texto para el marquee
-    QString displayText = m_currentFileName + "     " + m_currentFileName;
+     // Preparar el texto que se mostrará en el efecto marquee
+    QString displayText = m_currentFileName + "     " + m_currentFileName;     // Duplicar el nombre del archivo para que se desplace
 
-    // Ajustar el corte de texto al ancho del label
-    int visibleChars = m_floatingLabel->width() / 6; // Reducir el divisor para más rapidez
-    QString shownText = displayText.mid(m_scrollPosition, visibleChars);
-    m_floatingLabel->setText(shownText);
+    // Ajustar el corte de texto al ancho del label, cuántos caracteres se pueden mostrar en el label
+    int visibleChars = m_floatingLabel->width() / 6; // Dividir el ancho del label entre el tamaño de los caracteres
+    QString shownText = displayText.mid(m_scrollPosition, visibleChars);    // Obtener los caracteres visibles del texto
+    m_floatingLabel->setText(shownText);          // Actualizar el texto del label flotante
 
     // Incrementar la posición de desplazamiento
     m_scrollPosition++;
 
     // Reiniciar si se ha completado el ciclo
     if (m_scrollPosition > m_currentFileName.length() + 5) {
-        m_scrollPosition = 0;
+        m_scrollPosition = 0;  // Reiniciar el desplazamiento
     }
 }
 void MainWindow::addFile()
