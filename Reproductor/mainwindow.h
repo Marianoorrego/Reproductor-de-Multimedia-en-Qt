@@ -1,25 +1,25 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>      // Ventana principal de la aplicación
-#include <QMediaPlayer>     // Reproducción de audio y video
-#include <QAudioOutput>     // Salida de audio
-#include <QVideoWidget>     // Visualización de video
-#include <QFileDialog>      // Diálogos de selección de archivos
-#include <QMessageBox>      // Cuadros de mensaje
-#include <QTime>            // Manejo de tiempo
-#include <QDockWidget>      // Paneles acoplables
-#include <QListWidget>      // Listas de elementos
-#include <QMap>             // Mapeo de archivos a rutas
-#include <QDirIterator>
-#include <QDir>
-#include <QShortcut>
-#include <QLabel>
-#include <QPropertyAnimation>
-#include <QTimer>
-#include <QSettings>
-#include <QFileInfo>
-#include <QCloseEvent>
+#include <QMainWindow>          // Ventana principal de la aplicación
+#include <QMediaPlayer>         // Reproducción de audio y video
+#include <QAudioOutput>         // Salida de audio
+#include <QVideoWidget>         // Visualización de video
+#include <QFileDialog>          // Diálogos de selección de archivos
+#include <QMessageBox>          // Cuadros de mensaje
+#include <QTime>                // Manejo de tiempo
+#include <QDockWidget>          // Paneles acoplables
+#include <QListWidget>          // Listas de elementos
+#include <QMap>                 // Mapeo de archivos a rutas
+#include <QDirIterator>         // Iterador para directorios
+#include <QDir>                 // Manejo de directorios
+#include <QShortcut>            // Atajos de teclado
+#include <QLabel>               // Etiquetas para texto
+#include <QPropertyAnimation>   // Animación de propiedades
+#include <QTimer>               // Temporizadores
+#include <QSettings>            // Almacenamiento de configuración
+#include <QFileInfo>            // Información de archivos
+#include <QCloseEvent>          // Evento al cerrar la ventana
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; } // Espacio de nombres para la interfaz de usuario
@@ -39,18 +39,18 @@ protected:
 
 private slots:
     // Slots de interfaz de usuario para botones y sliders
-    void on_actionOpen_triggered();                       // Abrir archivo
+    void on_actionOpen_triggered();                            // Abrir archivo
     void on_horizontalSlider_Duration_valueChanged(int value); // Cambiar duración
-    void on_pushButton_Play_Pause_clicked();              // Reproducir/pausar
-    void on_pushButton_Stop_clicked();                    // Parar
-    void on_pushButton_Volume_clicked();                  // Silencio
-    void on_horizontalSlider_Volume_valueChanged(int value); // Cambiar volumen
-    void on_pushButton_Seek_Backward_clicked();           // Retroceder
-    void on_pushButton_Seek_Forward_clicked();            // Adelantar
-    void on_pushButton_Next_clicked();                    // Siguiente
-    void on_pushButton_Previous_clicked();                // Anterior
-    void onFileSelected(QListWidgetItem *item);           // Selección de archivo
-    void onMediaError(QMediaPlayer::Error error);         // Error en el medio
+    void on_pushButton_Play_Pause_clicked();                   // Reproducir/pausar
+    void on_pushButton_Stop_clicked();                         // Parar
+    void on_pushButton_Volume_clicked();                       // Silencio
+    void on_horizontalSlider_Volume_valueChanged(int value);   // Cambiar volumen
+    void on_pushButton_Seek_Backward_clicked();                // Retroceder
+    void on_pushButton_Seek_Forward_clicked();                 // Adelantar
+    void on_pushButton_Next_clicked();                         // Siguiente
+    void on_pushButton_Previous_clicked();                     // Anterior
+    void onFileSelected(QListWidgetItem *item);                // Selección de archivo
+    void onMediaError(QMediaPlayer::Error error);              // Error en el medio
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status); // Cambio de estado
 
     // Slots para manejar actualizaciones de reproducción
