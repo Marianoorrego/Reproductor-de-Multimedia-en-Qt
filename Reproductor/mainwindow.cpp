@@ -307,127 +307,128 @@ void MainWindow::updateDuration(qint64 Duration)    // Método que actualiza las
 }
 
 // Método para abrir un archivo de video o audio desde el explorador
-void MainWindow::on_actionOpen_triggered()
+void MainWindow::on_actionOpen_triggered()    // Este método se activa cuando el usuario selecciona la opción para abrir un archivo.
 {
-    QString FileName = QFileDialog::getOpenFileName(this, tr("Seleccione Un video"), "", tr("MP4 Files (*.mp4), MP3 Files (*.mp3)"));
+    QString FileName = QFileDialog::getOpenFileName(this, tr("Seleccione Un video"), "", tr("MP4 Files (*.mp4), MP3 Files (*.mp3)")); /* Muestra un cuadro de diálogo para seleccionar
+    un archivo de video o audio (.mp4 o .mp3). */
 
-    if (FileName.isEmpty()) {
-        return;
+    if (FileName.isEmpty()) {     // Si el usuario no seleccionó ningún archivo (se canceló la acción)...
+        return;                   // Salir del método sin hacer nada más.
     }
 
-    QFileInfo fileInfo(FileName);
-    QString displayName = fileInfo.fileName();
+    QFileInfo fileInfo(FileName);               // Crea un objeto QFileInfo con la ruta del archivo seleccionado.
+    QString displayName = fileInfo.fileName();  // Obtiene el nombre del archivo para mostrarlo en la interfaz de usuario.
 
-    if (FileName.endsWith(".mp3")) {
+    if (FileName.endsWith(".mp3")) {        // Si el archivo seleccionado es de tipo .mp3...
 
-        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
+        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));  // Asigna un video de fondo predeterminado al BackgroundPlayer.
 
-        BackgroundVideo->setVisible(true);
-        BackgroundPlayer->play();
+        BackgroundVideo->setVisible(true);    // Hace visible el video de fondo.
+        BackgroundPlayer->play();            // Reproduce el video de fondo.
 
-        Player->setSource(QUrl::fromLocalFile(FileName));
-        Player->play();
-    } else {
+        Player->setSource(QUrl::fromLocalFile(FileName));   // Asigna el archivo .mp3 como fuente del reproductor de audio.
+        Player->play();    // Reproduce el archivo de audio.
+    } else {       // Si el archivo es un video .mp4...
         // Reproducción de un archivo de video
-        BackgroundVideo->setVisible(false);
-        Video = new QVideoWidget();
-        Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-        Video->setParent(ui->groupBox_Video);
-        Player->setVideoOutput(Video);
-        Player->setSource(QUrl::fromLocalFile(FileName));
-        Video->setVisible(true);
-        Video->show();
+        BackgroundVideo->setVisible(false);   // Oculta el video de fondo.
+        Video = new QVideoWidget();           // Crea un nuevo widget de video.
+        Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);  // Establece la geometría del widget de video dentro de un grupo en la interfaz.
+        Video->setParent(ui->groupBox_Video);     // Establece el widget de video como hijo del contenedor groupBox_Video.
+        Player->setVideoOutput(Video);            // Asigna el widget de video como la salida del reproductor de medios.
+        Player->setSource(QUrl::fromLocalFile(FileName));     // Asigna el archivo de video como fuente del reproductor de medios.
+        Video->setVisible(true);    // Hace visible el widget de video.
+        Video->show();              // Muestra el widget de video.
     }
 
     // Mostrar marquee para el archivo abierto directamente
-    updateFloatingLabel(displayName);
+    updateFloatingLabel(displayName);     // Llama a updateFloatingLabel() para mostrar el nombre del archivo de manera flotante en la interfaz
 }
-// Control del botón de Play/Pause
-void MainWindow::on_pushButton_Play_Pause_clicked()
+// Control del botón de Play/Pause                     
+void MainWindow::on_pushButton_Play_Pause_clicked()    // Este método se activa cuando el usuario hace clic en el botón de Play/Pause.
 {
-    if (IS_Pause) {
-        IS_Pause = false;
-        Player->play();
-        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/pausa.png"));
-    } else {
-        IS_Pause = true;
-        Player->pause();
-        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
+    if (IS_Pause) {            // Si el estado es de pausa...
+        IS_Pause = false;      // Cambia el estado a reproducción.
+        Player->play();        // Reanuda la reproducción.
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/pausa.png"));   // Cambia el icono del botón a "pausa".
+    } else {              // Si el estado no está en pausa (está reproduciendo)...
+        IS_Pause = true;  // Cambia el estado a pausa.
+        Player->pause();  // Pausa la reproducción.
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));   // Cambia el icono del botón a "play".
     }
 
-    // Asegúrate de que el video de fondo se muestre correctamente
-    if (Player->mediaStatus() == QMediaPlayer::PlayingState) {
-        QString currentFile = playlist[currentIndex]; // Asegúrate de que currentIndex esté actualizado
-        if (currentFile.endsWith(".mp3")) {
-            BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
+    // Asegurar que el video de fondo se muestre correctamente
+    if (Player->mediaStatus() == QMediaPlayer::PlayingState) {        // Si el estado del reproductor es "reproduciendo"..
+        QString currentFile = playlist[currentIndex]; // Obtiene el archivo actual de la lista de reproducción.
+        if (currentFile.endsWith(".mp3")) {           // Si el archivo actual es de tipo .mp3...
+            BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));  / Establece un video de fondo predeterminado.
 
-            BackgroundVideo->setVisible(true);
-            BackgroundPlayer->play();
-        } else {
-            BackgroundPlayer->stop();
-            BackgroundVideo->setVisible(false);
+            BackgroundVideo->setVisible(true);   // Muestra el video de fondo.
+            BackgroundPlayer->play();            // Reproduce el video de fondo.
+        } else {                                 // Si el archivo actual no es de tipo .mp3 (es un archivo de video)...
+            BackgroundPlayer->stop();            // Detiene la reproducción del video de fondo.
+            BackgroundVideo->setVisible(false);  // Oculta el video de fondo.
         }
     }
 }
 
 // Control del botón de Stop
-void MainWindow::on_pushButton_Stop_clicked()
+void MainWindow::on_pushButton_Stop_clicked()  // Este método se activa cuando el usuario hace clic en el botón de "Stop".
 {
     // Detener la reproducción
-    Player->stop();
+    Player->stop();         // Detiene la reproducción del archivo de audio o video.
 
     // Detener el marquee
-    if (m_marqueeTimer) {
-        m_marqueeTimer->stop();
+    if (m_marqueeTimer) {         // Si el temporizador de desplazamiento (marquee) existe...
+        m_marqueeTimer->stop();   // Detiene el temporizador.
     }
 
     // Ocultar el label flotante
-    if (m_floatingLabel) {
-        m_floatingLabel->hide();
+    if (m_floatingLabel) {           // Si la etiqueta flotante existe...
+        m_floatingLabel->hide();     // Oculta la etiqueta flotante.
     }
 
     // Resetear el estado de reproducción
-    IS_Pause = true;
-    ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
+    IS_Pause = true;       // Establece el estado de pausa a verdadero.
+    ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));    // Cambia el icono del botón a "play".
 
     // Detener el video de fondo
-    BackgroundPlayer->stop();
-    BackgroundVideo->setVisible(false);
+    BackgroundPlayer->stop();             // Detiene la reproducción del video de fondo.
+    BackgroundVideo->setVisible(false);   // Oculta el video de fondo.
 }
 // Control del volumen
-void MainWindow::on_horizontalSlider_Volume_valueChanged(int value)
+void MainWindow::on_horizontalSlider_Volume_valueChanged(int value)      // Este método se activa cuando el usuario cambia el valor del deslizador de volumen.
 {
-    audioOutput->setVolume(value / 100.0);
-    if (value == 0) {
-        IS_Muted = true;
-        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/mute.png")); // Cambia a mute
-    } else {
-        IS_Muted = false;
-        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png")); // Cambia a sonido
+    audioOutput->setVolume(value / 100.0);      // Ajusta el volumen del audio según el valor del deslizador (valor entre 0 y 100).
+    if (value == 0) {        // Si el volumen es 0 (silenciado)...
+        IS_Muted = true;     // Establece el estado de "silenciado" como verdadero.
+        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/mute.png"));   // Cambia el icono del botón a "mute".
+    } else {                 // Si el volumen no es 0...
+        IS_Muted = false;    // Establece el estado de "silenciado" como falso.
+        ui->pushButton_Volume->setIcon(QIcon(":/imagenes/sound.png"));  // Cambia el icono del botón a "sound".
     }
 }
-void MainWindow::on_horizontalSlider_Duration_valueChanged(int value)
+void MainWindow::on_horizontalSlider_Duration_valueChanged(int value)      // Este método se activa cuando el usuario cambia la posición del deslizador de duración.
 {
-    Player->setPosition(value * 1000);
+    Player->setPosition(value * 1000);   // Establece la posición de reproducción en el reproductor, ajustada a la nueva posición del deslizador (en milisegundos)
 }
-// Avance en el video (seek forward)
-void MainWindow::on_pushButton_Seek_Backward_clicked()
+// Retroceso en el video  
+void MainWindow::on_pushButton_Seek_Backward_clicked()    // Este método se activa cuando el usuario hace clic en el botón de retroceder (seek backward).
 {
-    ui->horizontalSlider_Duration->setValue(ui->horizontalSlider_Duration->value() - 20);
-    Player->setPosition(ui->horizontalSlider_Duration->value() * 1000);
-}
-
-// Retroceso en el video (seek backward)
-void MainWindow::on_pushButton_Seek_Forward_clicked()
-{
-    ui->horizontalSlider_Duration->setValue(ui->horizontalSlider_Duration->value() + 20);
-    Player->setPosition(ui->horizontalSlider_Duration->value() * 1000);
+    ui->horizontalSlider_Duration->setValue(ui->horizontalSlider_Duration->value() - 20);   // Disminuye la posición del deslizador en 20.
+    Player->setPosition(ui->horizontalSlider_Duration->value() * 1000);   // Ajusta la posición de reproducción al nuevo valor del deslizador.
 }
 
-void MainWindow::initializeVideoWidget() {
-    BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-    BackgroundVideo->setVisible(false); // Inicialmente no visible
-    Player->setVideoOutput(BackgroundVideo); // Asignar el video widget al reproductor
+// Avance en el video
+void MainWindow::on_pushButton_Seek_Forward_clicked()         // Este método se activa cuando el usuario hace clic en el botón de avanzar (seek forward).
+{
+    ui->horizontalSlider_Duration->setValue(ui->horizontalSlider_Duration->value() + 20);   // Aumenta la posición del deslizador en 20
+    Player->setPosition(ui->horizontalSlider_Duration->value() * 1000);      // Ajusta la posición de reproducción al nuevo valor del deslizador
+}
+
+void MainWindow::initializeVideoWidget() {            // Este método inicializa el widget de video
+    BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);   // Establece la geometría del widget de video dentro del contenedor
+    BackgroundVideo->setVisible(false); // Inicialmente, el video de fondo no es visible.
+    Player->setVideoOutput(BackgroundVideo); // Asigna el widget de video de fondo al reproductor.
 }
 
 
