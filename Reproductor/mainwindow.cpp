@@ -432,134 +432,132 @@ void MainWindow::initializeVideoWidget() {            // Este método inicializa
 }
 
 
-void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
+void MainWindow::onMediaStatusChanged(QMediaPlayer::MediaStatus status)   // Este método se ejecuta cuando el estado del reproductor de medios cambia.
 {
-    if (status == QMediaPlayer::EndOfMedia) {
+    if (status == QMediaPlayer::EndOfMedia) {                   // Si el estado indica que se ha llegado al final del archivo...
         // Mostrar de nuevo el archivo actual en la lista
-        for (int i = 0; i < fileList->count(); ++i) {
-            QListWidgetItem* item = fileList->item(i);
-            if (!item->isHidden()) {
-                item->setHidden(false);
-                break;
+        for (int i = 0; i < fileList->count(); ++i) {           // Recorre todos los elementos de la lista de archivos.
+            QListWidgetItem* item = fileList->item(i);           // Obtiene un ítem de la lista.
+            if (!item->isHidden()) {                            // Si el ítem no está oculto...
+                item->setHidden(false);                         // Lo hace visible nuevamente.
+                break;                                          // Sale del bucle después de encontrar el primer archivo visible.
             }
         }
 
         // Ir al siguiente archivo
-        on_pushButton_Next_clicked();
+        on_pushButton_Next_clicked();       // Llama al método para cambiar al siguiente archivo en la lista.
     }
 
     // Actualizar el botón de Play/Pause según el estado del reproductor
-    if (Player->mediaStatus() == QMediaPlayer::PlayingState) {
-        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/pausa.png"));
-        IS_Pause = false; // Asegúrate de que el estado de pausa sea correcto
-    } else if (Player->mediaStatus() == QMediaPlayer::PausedState) {
-        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));
-        IS_Pause = true; // Asegúrate de que el estado de pausa sea correcto
+    if (Player->mediaStatus() == QMediaPlayer::PlayingState) {                     // Si el reproductor está reproduciendo...
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/pausa.png"));         // Cambia el icono del botón a "pausa".
+        IS_Pause = false;                                                          // Establece que no está en pausa.
+    } else if (Player->mediaStatus() == QMediaPlayer::PausedState) {               // Si el reproductor está en pausa...
+        ui->pushButton_Play_Pause->setIcon(QIcon(":/imagenes/play.png"));          // Cambia el icono del botón a "play".
+        IS_Pause = true;                                                           // Establece que está en pausa
     }
 }
-void MainWindow::increaseVolume() {
-    int currentVolume = ui->horizontalSlider_Volume->value();
-    if (currentVolume < 100) {
+void MainWindow::increaseVolume() {         // Este método aumenta el volumen.
+    int currentVolume = ui->horizontalSlider_Volume->value();      // Obtiene el valor actual del deslizador de volumen.
+    if (currentVolume < 100) {       // Si el volumen no está al máximo...
         currentVolume += 5; // Aumenta el volumen en 5 unidades
-        ui-> horizontalSlider_Volume->setValue(currentVolume);
-        audioOutput->setVolume(currentVolume / 100.0);
+        ui-> horizontalSlider_Volume->setValue(currentVolume);      // Actualiza el valor del deslizador.
+        audioOutput->setVolume(currentVolume / 100.0);    // Ajusta el volumen del audio.
     }
 }
 
-void MainWindow::decreaseVolume() {
-    int currentVolume = ui->horizontalSlider_Volume->value();
-    if (currentVolume > 0) {
+void MainWindow::decreaseVolume() {       // Este método disminuye el volumen.
+    int currentVolume = ui->horizontalSlider_Volume->value();    // Obtiene el valor actual del deslizador de volumen
+    if (currentVolume > 0) {  // Si el volumen no está en cero...
         currentVolume -= 5; // Disminuye el volumen en 5 unidades
-        ui->horizontalSlider_Volume->setValue(currentVolume);
-        audioOutput->setVolume(currentVolume / 100.0);
+        ui->horizontalSlider_Volume->setValue(currentVolume);  // Actualiza el valor del deslizador.
+        audioOutput->setVolume(currentVolume / 100.0);     // Ajusta el volumen del audio.
     }
 }
-
-void MainWindow::initializePlaylistIndex()
+// Método para inicializar el índice de la lista de reproducción
+void MainWindow::initializePlaylistIndex()    // Este método inicializa el índice de la lista de reproducción.
 {
-    if (playlist.isEmpty()) {
-        currentIndex = -1;
-        return;
+    if (playlist.isEmpty()) {      // Si la lista de reproducción está vacía...
+        currentIndex = -1;         // Establece el índice como -1 (sin archivo seleccionado).
+        return;                    // Sale del método.
     }
 
     // Buscar el primer archivo válido
-    for (int i = 0; i < playlist.size(); ++i) {
-        QFileInfo fileInfo(playlist[i]);
-        if (fileInfo.exists()) {
-            currentIndex = i;
-            return;
+    for (int i = 0; i < playlist.size(); ++i) {    // Recorre todos los archivos de la lista de reproducción.
+        QFileInfo fileInfo(playlist[i]);           // Obtiene la información del archivo actual.
+        if (fileInfo.exists()) {                   // Si el archivo existe...
+            currentIndex = i;                      // Establece el índice al archivo válido.
+            return;                                 // Sale del método.
         }
     }
-
     // Si no se encontró ningún archivo válido
-    currentIndex = -1;
+    currentIndex = -1;   // Si no se encontró un archivo válido, establece el índice como -1.
 }
 
-
-
-void MainWindow::playFile(const QString& filePath)
+// Método para reproducir un archivo de la lista
+void MainWindow::playFile(const QString& filePath)   // Este método reproduce un archivo dado su path.
 {
-    if (filePath.isEmpty()) return;
+    if (filePath.isEmpty()) return;         // Si la ruta del archivo está vacía, no hace nada.
 
     // Limpiar configuraciones anteriores
-    if (Video) {
-        delete Video;
-        Video = nullptr;
+    if (Video) {          // Si ya existe un widget de video...
+        delete Video;     // Elimina el widget de video.
+        Video = nullptr;  // Asigna a Video un valor nulo.
     }
 
     // Ocultar todos los archivos visibles antes de mostrar el nuevo
-    for (int i = 0; i < fileList->count(); ++i) {
-        fileList->item(i)->setHidden(false);
+    for (int i = 0; i < fileList->count(); ++i) {    // Recorre todos los archivos de la lista.
+        fileList->item(i)->setHidden(false);          // Asegura que todos los archivos estén visibles
     }
 
     // Encontrar el item correspondiente al archivo
-    QString displayName;
-    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
-        if (it.value() == filePath) {
-            displayName = it.key(); // Usar la clave completa que incluye el número
-            break;
+    QString displayName;         // Variable para almacenar el nombre del archivo a mostrar.
+    for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {       // Recorre el mapa de archivos.
+        if (it.value() == filePath) {        // Si el valor del archivo coincide con la ruta proporcionada...
+            displayName = it.key();   // Usa la clave (nombre del archivo) para mostrarlo.
+            break;  //Sale del bucle después de encontrar el archivo.
         }
     }
 
     // Ocultar el archivo actual de la lista
-    QList<QListWidgetItem*> items = fileList->findItems(displayName.split(". ").last(), Qt::MatchExactly);
-    if (!items.isEmpty()) {
-        QListWidgetItem* currentItem = items.first();
-        currentItem->setHidden(true);
+    QList<QListWidgetItem*> items = fileList->findItems(displayName.split(". ").last(), Qt::MatchExactly);  // Busca el archivo en la lista de elementos.
+    if (!items.isEmpty()) {    // Si el archivo se encuentra...
+        QListWidgetItem* currentItem = items.first();  // Obtiene el primer ítem encontrado.
+        currentItem->setHidden(true);   // Lo oculta en la lista.
 
         // Mostrar label flotante con el nombre del archivo
-        updateFloatingLabel(displayName);
+        updateFloatingLabel(displayName);   // Muestra el nombre del archivo en una etiqueta flotante.
     }
 
     // Actualizar selección en la lista
-    fileList->setCurrentRow(currentIndex);
+    fileList->setCurrentRow(currentIndex);   // Establece el ítem seleccionado en la lista.
 
-    if (filePath.endsWith(".mp3")) {
+    if (filePath.endsWith(".mp3")) {    // Si el archivo es un archivo de audio (.mp3)...
         // Configuración para audio
-        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));
+        BackgroundPlayer->setSource(QUrl("qrc:/imagenes/nexosbackgroud.mp4"));  // Establece un video de fondo predeterminado.
 
         // Asegurarse de que el video de fondo esté configurado correctamente
-        BackgroundPlayer->setVideoOutput(BackgroundVideo);
-        BackgroundVideo->setParent(ui->groupBox_Video);
-        BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
+        BackgroundPlayer->setVideoOutput(BackgroundVideo);   // Asocia el reproductor de fondo al widget de video
+        BackgroundVideo->setParent(ui->groupBox_Video);      // Establece el grupo de video como contenedor para el widget de video.
+        BackgroundVideo->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);   // Ajusta la geometría del video de fondo.
 
-        BackgroundVideo->setVisible(true);
-        BackgroundPlayer->play();
+        BackgroundVideo->setVisible(true);    // Hace visible el video de fondo.
+        BackgroundPlayer->play();             // Comienza a reproducir el video de fondo.
 
-        Player->setSource(QUrl::fromLocalFile(filePath));
-        Player->play();
-    } else {
+        Player->setSource(QUrl::fromLocalFile(filePath));    // Establece el archivo de audio como fuente para el reproductor.
+        Player->play();   // Comienza a reproducir el archivo de audio.
+    } else {    // Si el archivo es un archivo de video...
         // Configuración para video
-        BackgroundPlayer->stop();
-        BackgroundVideo->setVisible(false);
+        BackgroundPlayer->stop();   // Detiene el video de fondo.
+        BackgroundVideo->setVisible(false);   // Hace invisible el video de fondo.
+ 
+        Video = new QVideoWidget(ui->groupBox_Video);    // Crea un nuevo widget de video para mostrar el video.
+        Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);   // Ajusta la geometría del widget de video.
+        Player->setVideoOutput(Video);    // Asocia el widget de video al reproductor.
+        Video->show();     // Muestra el widget de video.
 
-        Video = new QVideoWidget(ui->groupBox_Video);
-        Video->setGeometry(5, 5, ui->groupBox_Video->width() - 10, ui->groupBox_Video->height() - 10);
-        Player->setVideoOutput(Video);
-        Video->show();
-
-        Player->setSource(QUrl::fromLocalFile(filePath));
-        Player->play();
+        Player->setSource(QUrl::fromLocalFile(filePath));   // Establece el archivo de video como fuente para el reproductor.
+        Player->play();    // Comienza a reproducir el archivo de video.
     }
 }
 
