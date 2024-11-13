@@ -687,95 +687,97 @@ void MainWindow::updateMarqueeText()
 }
 void MainWindow::addFile()
 {
-    QFileDialog dialog(this);
-    dialog.setWindowTitle(tr("Seleccionar archivos o carpetas"));
-    dialog.setFileMode(QFileDialog::ExistingFiles);
-    dialog.setNameFilter(tr("Archivos multimedia (*.mp3 *.mp4)"));
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setDirectory(QDir::homePath());
+    QFileDialog dialog(this);                                        // Crear un cuadro de diálogo para seleccionar archivos o carpetas
+    dialog.setWindowTitle(tr("Seleccionar archivos o carpetas"));    // Establecer el título de la ventana del cuadro de diálogo
+    dialog.setFileMode(QFileDialog::ExistingFiles);                  // Establecer el modo de selección para archivos existentes
+    dialog.setNameFilter(tr("Archivos multimedia (*.mp3 *.mp4)"));   // Establecer un filtro para seleccionar solo archivos .mp3 y .mp4
+    dialog.setViewMode(QFileDialog::Detail);                         // Establecer el modo de vista en detalles
+    dialog.setDirectory(QDir::homePath());                           // Establecer el directorio inicial para la selección en el directorio del usuario
 
-    dialog.resize(800, 600);
+    dialog.resize(800, 600);          // Redimensionar el cuadro de diálogo para que sea más grande
 
-    QStringList fileNames;
-    QPushButton* folderButton = new QPushButton("Seleccionar Carpeta", &dialog);
-    connect(folderButton, &QPushButton::clicked, [&]() {
-        QString dir = QFileDialog::getExistingDirectory(&dialog, "Seleccionar Carpeta", QDir::homePath());
-        if (!dir.isEmpty()) {
-            QDir directory(dir);
+    QStringList fileNames;            // Crear una lista para almacenar los nombres de los archivos seleccionados
+    QPushButton* folderButton = new QPushButton("Seleccionar Carpeta", &dialog);       // Crear un botón para seleccionar una carpeta
+    connect(folderButton, &QPushButton::clicked, [&]() {                               // Conectar el botón de la carpeta a una función lambda para seleccionar una carpeta
+        QString dir = QFileDialog::getExistingDirectory(&dialog, "Seleccionar Carpeta", QDir::homePath());     // Mostrar un cuadro de diálogo para seleccionar una carpeta
+        if (!dir.isEmpty()) {               // Si se seleccionó una carpeta
+            QDir directory(dir);            // Crear un objeto QDir para gestionar los archivos en la carpeta seleccionada
             QStringList filters;
-            filters << "*.mp3" << "*.mp4";
-            QStringList files = directory.entryList(filters, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+            filters << "*.mp3" << "*.mp4";    // Filtrar archivos .mp3 y .mp4
+            QStringList files = directory.entryList(filters, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);   // Obtener la lista de archivos que cumplen con los filtros
 
-            foreach(QString file, files) {
+            foreach(QString file, files) {                              // Agregar cada archivo a la lista de archivos seleccionados
                 fileNames << directory.absoluteFilePath(file);
             }
-            dialog.close();
-        }
+            dialog.close();            // Cerrar el cuadro de diálogo de selección de carpeta
+        } 
     });
-
+ // Obtener el layout del cuadro de diálogo y agregar el botón de seleccionar carpeta
     QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(dialog.layout());
     if (layout) {
         layout->addWidget(folderButton);
     }
 
+    // Si el cuadro de diálogo se aceptó, agregar los archivos seleccionados a la lista de archivos
     if (dialog.exec() == QDialog::Accepted) {
         fileNames.append(dialog.selectedFiles());
     }
 
-    // Crear un mapa temporal para ordenar
+     // Crear un mapa temporal para ordenar los archivos seleccionados
     QMap<int, QPair<QString, QString>> numberedFiles;
-    int nextNumber = fileList->count() + 1;
+    int nextNumber = fileList->count() + 1;    // Inicializar el número de archivo siguiente
 
     // Procesar los archivos seleccionados
     for (const QString& fileName : fileNames) {
         QFileInfo fileInfo(fileName);
 
-        // Usar el siguiente número disponible
+        // Asignar el siguiente número disponible para cada archivo
         numberedFiles[nextNumber] = qMakePair(fileInfo.fileName(), fileName);
         nextNumber++;
     }
 
     // Agregar los archivos a la lista existente
     for (auto it = numberedFiles.begin(); it != numberedFiles.end(); ++it) {
-        int number = it.key();
-        QString originalFileName = it.value().first;
-        QString fullFileName = it.value().second;
+        int number = it.key();        // Obtener el número del archivo
+        QString originalFileName = it.value().first;      // Obtener el nombre original del archivo
+        QString fullFileName = it.value().second;         // Obtener la ruta completa del archivo
 
         // Almacenar el número internamente, pero mostrar solo el nombre del archivo
         fileList->addItem(originalFileName);
 
         // Crear una clave que incluya el número para mantener la lógica interna
         QString internalKey = QString("%1. %2").arg(number).arg(originalFileName);
-        fileMap[internalKey] = fullFileName;
-        playlist.append(fullFileName);
+        fileMap[internalKey] = fullFileName;         // Asociar la clave interna con la ruta completa
+        playlist.append(fullFileName);               // Agregar el archivo a la lista de reproducción
     }
 
     // Si no hay reproducción actual, reproducir el primer archivo
     if (Player->mediaStatus() != QMediaPlayer::PlayingState && !playlist.isEmpty()) {
-        currentNumber = 1;
-        playFile(playlist.first());
+        currentNumber = 1;            // Establecer el número de archivo actual en 1
+        playFile(playlist.first());   // Reproducir el primer archivo de la lista
     }
 }
 
-void MainWindow::onFileSelected(QListWidgetItem *item)
-{
+void MainWindow::onFileSelected(QListWidgetItem *item)  
+// Obtener el nombre de archivo del ítem seleccionado de la lista
     QString displayName = item->text();
-
+ 
     // Buscar la clave completa en el mapa que coincida con el nombre del archivo
     QString fullKey;
     for (auto it = fileMap.begin(); it != fileMap.end(); ++it) {
-        if (it.key().endsWith(displayName)) {
-            fullKey = it.key();
+        if (it.key().endsWith(displayName)) {        // Comprobar si la clave termina con el nombre del archivo
+            fullKey = it.key();                     // Asignar la clave completa al encontrar la coincidencia
             break;
         }
     }
-
+// Obtener el nombre completo del archivo correspondiente a la clave encontrada
     QString fullFileName = fileMap.value(fullKey);
 
+   // Si se encontró el archivo, reproducirlo
     if (!fullFileName.isEmpty()) {
         // Extraer el número del principio de la clave interna
         currentNumber = fullKey.split(".")[0].toInt();
-        playFile(fullFileName);
+        playFile(fullFileName);       // Reproducir el archivo completo
     }
 }
 
